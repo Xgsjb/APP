@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2018 yuzu Emulator Project & 2024 suyu Emulator Project
+# SPDX-FileCopyrightText: 2018 yuzu Emulator Project
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 add_subdirectory(host_shaders)
@@ -425,6 +425,11 @@ else()
 
     # VMA
     set_source_files_properties(vulkan_common/vma.cpp PROPERTIES COMPILE_OPTIONS "-Wno-conversion;-Wno-unused-variable;-Wno-unused-parameter;-Wno-missing-field-initializers")
+
+    # Get around GCC failing with intrinsics in Debug
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_BUILD_TYPE MATCHES "Debug")
+        set_source_files_properties(host1x/vic.cpp PROPERTIES COMPILE_OPTIONS "-O2")
+    endif()
 endif()
 
 if (ARCHITECTURE_x86_64)

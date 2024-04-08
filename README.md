@@ -1,6 +1,7 @@
 <!--
-SPDX-FileCopyrightText: 2024 suyu emulator project
-SPDX-License-Identifier: GPL v3
+SPDX-FileCopyrightText: 2023 yuzu Emulator Project
+SPDX-FileCopyrightText: 2024 suyu Emulator Project
+SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
 **Note**: We do not support or condone piracy in any form. In order to use suyu, you'll need keys from your real Switch system, and games which you have legally obtained and paid for. We do not intend to make money or profit from this project.
@@ -31,12 +32,15 @@ It is written in C++ with portability in mind, and we're actively working on bui
   <a href="#building">Building</a> |
   <a href="#support">Support</a> |
   <a href="#license">License</a> |
-  <a href="https://gitlab.com/suyu-emu/suyu/-/pipelines">Pipelines</a>
+  <a href="https://git.suyu.dev/suyu/suyu/actions">Pipelines</a>
 </p>
+
+## Hardware Requirements
+[Click here to see the Hardware Requirements](https://git.suyu.dev/suyu/suyu/wiki/Hardware-Requirements)
 
 ## Status
 
-Although we're able to make builds, we don't have a version ready for distribution yet. But we can always use more help! You can make a merge request if you'd like to see something changed, or you can [chat with other developers to find out what needs work](https://discord.gg/suyu).
+We currently have builds over at the [Releases](https://git.suyu.dev/suyu/suyu/releases) page.
 
 **Note**: We try to update this README whenever we can, but some links might be broken, and some information may be outdated or irrelevant.
 
@@ -46,20 +50,28 @@ This project is completely free and open source, and anyone can contribute to he
 
 Most of the development happens on GitLab. For development discussion, please join us on [Discord](https://discord.gg/suyu).
 
-If you want to contribute, please take a look at the [Contributor's Guide](https://gitlab.com/suyu-emu/suyu/-/wikis/Contributing) and [Developer Information](https://gitlab.com/suyu-emu/suyu/-/wikis/Developer-Information).
+If you want to contribute, please take a look at the [Contributor's Guide](https://git.suyu.dev/suyu/suyu/wiki/Contributing) and [Developer Information](https://git.suyu.dev/suyu/suyu/wiki/Developer-Information).
 You can also contact any of the developers on Discord to learn more about the current state of suyu.
 
 ## Downloads
 
-* __Windows__: WIP
-* __Linux__: WIP
+* __Windows__: [Releases](https://git.suyu.dev/suyu/suyu/releases)
+* __Linux__: [Releases](https://git.suyu.dev/suyu/suyu/releases)
+* __macOS__: [Releases](https://git.suyu.dev/suyu/suyu/releases)
+* __Android__: [Releases](https://git.suyu.dev/suyu/suyu/releases)
 
-We don't have any official builds yet! If any website or person is claiming to have a build for suyu, take that with a grain of salt, because it might contain malware. Until we do have an official build, it might be a better idea to keep using the last version of yuzu.
+If you want daily builds then [Click here](https://git.suyu.dev/suyu/suyu/actions)
+If you don't know how to download the daily builds then [Click here](https://git.suyu.dev/suyu/suyu/raw/branch/dev/img/daily-builds.png)
+Right now we only have daily builds for Linux and Android.
+
+We have official builds [here.](https://git.suyu.dev/suyu/suyu/releases) If any website or person is claiming to have a build for suyu, take that with a grain of salt.
 
 ## Building
 
-* __Windows__: [Wiki page](https://gitlab.com/suyu-emu/suyu/-/wikis/Building-for-Windows)
-* __Linux__: [Wiki page](https://gitlab.com/suyu-emu/suyu/-/wikis/Building-for-Linux)
+* __Windows__: [Windows Build](https://git.suyu.dev/suyu/suyu/wiki/Building-For-Windows)
+* __Linux__: [Linux Build](https://git.suyu.dev/suyu/suyu/wiki/Building-For-Linux)
+* __Android__: [Android Build](https://git.suyu.dev/suyu/suyu/wiki/Building-For-Android)
+* __macOS__: [macOS Build](https://git.suyu.dev/suyu/suyu/wiki/Building-for-macOS)
 
 
 
@@ -70,4 +82,4 @@ If you have any questions, don't hesitate to ask us on [Discord](https://discord
 
 ## License
 
-suyu is licensed under the free and open-source GPL v3 license.
+suyu is licensed under the free and open-source GPL-3.0-or-later license.

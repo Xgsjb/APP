@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2014 Citra Emulator Project  & 2024 suyu Emulator Project
+// SPDX-FileCopyrightText: 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 // Modified by palfaiate on <2024/03/07>
@@ -12,6 +12,7 @@
 #include <thread>
 #include "core/hle/service/am/applet_manager.h"
 #include "core/loader/nca.h"
+#include "core/loader/nro.h"
 #include "core/tools/renderdoc.h"
 
 #ifdef __APPLE__
@@ -1747,18 +1748,20 @@ void GMainWindow::AllowOSSleep() {
 }
 
 bool GMainWindow::LoadROM(const QString& filename, Service::AM::FrontendAppletParameters params) {
-    if (!CheckFirmwarePresence()) {
-        QMessageBox::critical(this, tr("Component Missing"), tr("Missing Firmware."));
-        return false;
-    }
+    if (Loader::AppLoader_NRO::IdentifyType(
+            Core::GetGameFileFromPath(vfs, filename.toStdString())) != Loader::FileType::NRO) {
+        if (!CheckFirmwarePresence()) {
+            QMessageBox::critical(this, tr("Component Missing"), tr("Missing Firmware."));
+            return false;
+        }
 
-    if (!ContentManager::AreKeysPresent()) {
-        QMessageBox::warning(this, tr("Derivation Components Missing"),
-                             tr("Encryption keys are missing. "
-                                "In order to use this emulator"
-                                "you need to provide your own encryption keys"
-                                "in order to play them."));
-        return false;
+        if (!ContentManager::AreKeysPresent()) {
+            QMessageBox::warning(
+                this, tr("Encryption Keys Missing"),
+                tr("In order to use suyu you need to provide your own encryption keys. "
+                   "You can install them by going to Tools -> Install encryption keys."));
+            return false;
+        }
     }
 
     // Shutdown previous session if the emu thread is still active...
@@ -4630,8 +4633,8 @@ void GMainWindow::OnCheckFirmwareDecryption() {
     if (!ContentManager::AreKeysPresent()) {
         QMessageBox::warning(this, tr("Derivation Components Missing"),
                              tr("Encryption keys are missing. "
-                                "In order to use this emulator"
-                                "you need to provide your own encryption keys"
+                                "In order to use this emulator, "
+                                "you need to provide your own encryption keys "
                                 "in order to play them."));
     }
 
@@ -5077,7 +5080,7 @@ int main(int argc, char* argv[]) {
 
     // Fix the Wayland appId. This needs to match the name of the .desktop file without the .desktop
     // suffix.
-    QGuiApplication::setDesktopFileName(QStringLiteral("org.suyu_emu.suyu"));
+    QGuiApplication::setDesktopFileName(QStringLiteral("dev.suyu_emu.suyu"));
 #endif
 
     SetHighDPIAttributes();
