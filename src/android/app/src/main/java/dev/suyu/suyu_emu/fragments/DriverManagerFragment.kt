@@ -32,14 +32,9 @@ import dev.suyu.suyu_emu.utils.NativeConfig
 import dev.suyu.suyu_emu.utils.ViewUtils.updateMargins
 import dev.suyu.suyu_emu.utils.collect
 import java.io.File
-import java.io.IOException
 import android.app.AlertDialog
-import android.content.Context
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.method.LinkMovementMethod
-import android.text.style.ClickableSpan
 import android.widget.TextView
+import android.widget.Toast
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -111,23 +106,21 @@ class DriverManagerFragment : Fragment() {
         }
 
         binding.buttonDownload.setOnClickListener {
-            val layoutInflater = LayoutInflater.from(context)
-            val dialogView = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
-            val textView = dialogView.findViewById<TextView>(R.id.text_message)
-            val downloadText = dialogView.findViewById<TextView>(R.id.text_download)
-     
-    textView.text = "Turnip-24.1.0.adpkg_R18"
-    downloadText.setOnClickListener {
-        // 实现下载逻辑
+    val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
+
+    val textTitle = dialogView.findViewById<TextView>(R.id.text_title)
+    val textDownload = dialogView.findViewById<TextView>(R.id.text_download)
+
+    textTitle.text = "Turnip-24.1.0.adpkg_R18"
+
+    textDownload.setOnClickListener {
+        Toast.makeText(requireContext(), "开始下载 Turnip-24.1.0.adpkg_R18", Toast.LENGTH_SHORT).show()
     }
- 
-    // 创建对话框并设置自定义布局
-    AlertDialog.Builder(requireContext()).apply {
-        setTitle("New Update Available!")
-        setView(dialogView)
-        setNegativeButton("Cancel", null)
-        create().show()
-    }
+
+    val dialogBuilder = AlertDialog.Builder(requireContext())
+    dialogBuilder.setView(dialogView)
+    val dialog = dialogBuilder.create()
+    dialog.show()
         }
 
         binding.listDrivers.apply {
