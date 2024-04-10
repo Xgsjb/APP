@@ -111,8 +111,14 @@ class DriverManagerFragment : Fragment() {
 
     val textTitle = dialogView.findViewById<TextView>(R.id.text_title)
     val textDownload = dialogView.findViewById<TextView>(R.id.text_download)
+    val textTitle = dialogView.findViewById<TextView>(R.id.text_2title)
+    val textDownload = dialogView.findViewById<TextView>(R.id.text_2download)
+    val textTitle = dialogView.findViewById<TextView>(R.id.text_3title)
+    val textDownload = dialogView.findViewById<TextView>(R.id.text_3download)
 
     textTitle.text = "Turnip-24.1.0.adpkg_R18"
+    textTitle.text = "Turnip-24.1.0.adpkg_R17"
+    textTitle.text = "Turnip-24.1.0.adpkg_R16"
 
     textDownload.setOnClickListener {
         Toast.makeText(requireContext(), "开始下载 Turnip-24.1.0.adpkg_R18", Toast.LENGTH_SHORT).show()
