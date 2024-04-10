@@ -32,6 +32,7 @@ import dev.suyu.suyu_emu.utils.NativeConfig
 import dev.suyu.suyu_emu.utils.ViewUtils.updateMargins
 import dev.suyu.suyu_emu.utils.collect
 import java.io.File
+import java.io.IOException
 import android.app.AlertDialog
 import android.widget.TextView
 import android.widget.Toast
