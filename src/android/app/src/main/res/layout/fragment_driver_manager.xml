@@ -43,6 +43,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         android:text="下载"
+        app:layout_constraintTop_toTopOf="@id/button_install"
         app:layout_constraintBottom_toTopOf="@id/button_install"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
