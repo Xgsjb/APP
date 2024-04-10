@@ -103,6 +103,10 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
+        binding.buttondownload.setOnClickListener {
+            getDriver.launch(arrayOf("application/zip"))
+        }
+
         binding.listDrivers.apply {
             layoutManager = GridLayoutManager(
                 requireContext(),
