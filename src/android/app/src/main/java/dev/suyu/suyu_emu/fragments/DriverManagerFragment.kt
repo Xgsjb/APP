@@ -103,7 +103,7 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        binding.buttondownload.setOnClickListener {
+        binding.buttonDownload.setOnClickListener {
             getDriver.launch(arrayOf("application/zip"))
         }
 
