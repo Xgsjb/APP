@@ -33,6 +33,13 @@ import dev.suyu.suyu_emu.utils.ViewUtils.updateMargins
 import dev.suyu.suyu_emu.utils.collect
 import java.io.File
 import java.io.IOException
+import android.app.AlertDialog
+import android.content.Context
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
+import android.widget.TextView
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -104,7 +111,23 @@ class DriverManagerFragment : Fragment() {
         }
 
         binding.buttonDownload.setOnClickListener {
-            getDriver.launch(arrayOf("application/zip"))
+            val layoutInflater = LayoutInflater.from(context)
+            val dialogView = layoutInflater.inflate(R.layout.custom_dialog_layout, null)
+            val textView = dialogView.findViewById<TextView>(R.id.text_message)
+            val downloadText = dialogView.findViewById<TextView>(R.id.text_download)
+     
+    textView.text = "Turnip-24.1.0.adpkg_R18"
+    downloadText.setOnClickListener {
+        // 实现下载逻辑
+    }
+ 
+    // 创建对话框并设置自定义布局
+    AlertDialog.Builder(requireContext()).apply {
+        setTitle("New Update Available!")
+        setView(dialogView)
+        setNegativeButton("Cancel", null)
+        create().show()
+    }
         }
 
         binding.listDrivers.apply {
