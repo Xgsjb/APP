@@ -2,20 +2,19 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
+    android:orientation="vertical"
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/text_title"
-        android:layout_width="0dp"
+        android:id="@+id/text_title1"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:text="Turnip-24.1.0.adpkg_R18"
         android:textSize="18sp"
         android:textStyle="bold" />
-
+        
     <TextView
-        android:id="@+id/text_download"
+        android:id="@+id/text_download1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="下载"
@@ -23,16 +22,15 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/text_2title"
-        android:layout_width="0dp"
+        android:id="@+id/text_title2"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:text="Turnip-24.1.0.adpkg_R17"
         android:textSize="18sp"
         android:textStyle="bold" />
-
+        
     <TextView
-        android:id="@+id/text_2download"
+        android:id="@+id/text_download2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="下载"
@@ -40,16 +38,15 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/text_3title"
-        android:layout_width="0dp"
+        android:id="@+id/text_title3"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
         android:text="Turnip-24.1.0.adpkg_R16"
         android:textSize="18sp"
         android:textStyle="bold" />
-
+        
     <TextView
-        android:id="@+id/text_3download"
+        android:id="@+id/text_download3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="下载"
