@@ -106,7 +106,17 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        binding.buttonDownload.setOnClickListener {
+        fun downloadFile(context: Context, url: String, fileName: String) {
+    val request = DownloadManager.Request(Uri.parse(url))
+    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+        .setTitle(fileName)
+        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    dm.enqueue(request)
+}
+
+binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
 
@@ -142,7 +152,7 @@ class DriverManagerFragment : Fragment() {
     dialogBuilder.setView(dialogView)
     val dialog = dialogBuilder.create()
     dialog.show()
-        }
+}
 
         binding.listDrivers.apply {
             layoutManager = GridLayoutManager(
