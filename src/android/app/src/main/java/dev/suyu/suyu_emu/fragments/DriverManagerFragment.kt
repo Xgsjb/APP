@@ -36,6 +36,10 @@ import java.io.IOException
 import android.app.AlertDialog
 import android.widget.TextView
 import android.widget.Toast
+import android.content.Context
+import android.app.DownloadManager
+import android.net.Uri
+import android.os.Environment
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
