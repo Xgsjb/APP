@@ -257,12 +257,12 @@ binding.buttonDownload.setOnClickListener {
                 false
             ) { _, _ ->
                 val driverPath =
-                    "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(result)}"
+                    "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
                 val driverFile = File(driverPath)
 
                 // Ignore file exceptions when a user selects an invalid zip
                 try {
-                    if (!GpuDriverHelper.copyDriverToInternalStorage(result)) {
+                    if (!GpuDriverHelper.copyDriverToInternalStorage(driverFile)) {
                         throw IOException("Driver failed validation!")
                     }
                 } catch (_: IOException) {
