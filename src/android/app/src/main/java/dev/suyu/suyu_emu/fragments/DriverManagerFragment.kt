@@ -40,6 +40,9 @@ import android.content.Context
 import android.app.DownloadManager
 import android.net.Uri
 import android.os.Environment
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -110,15 +113,60 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String) {
-    val request = DownloadManager.Request(Uri.parse(url))
-    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-        .setTitle(fileName)
-        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    dm.enqueue(request)
-}
+        fun downloadFileWithProgress(context: Context, url: String, fileName: String) {
+    val request = DownloadManager.Request(Uri.parse(url)).apply {
+        setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+        setTitle(fileName)
+        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    }
+
+    val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val downloadId = downloadManager.enqueue(request)
+
+    val broadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
+                val query = DownloadManager.Query().setFilterById(
+                    intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0)
+                )
+                val cursor = downloadManager.query(query)
+                if (cursor.moveToFirst()) {
+                    val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                    if (DownloadManager.STATUS_SUCCESSFUL == cursor.getInt(columnIndex)) {
+                        val file =
+                            File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
+                        processFile(file)
+                    }
+                }
+                cursor.close()
+            }
+        }
+    }
+
+    context.registerReceiver(broadcastReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
+
+    // 创建进度更新线程
+    val progressThread = Thread {
+        var downloading = true
+        while (downloading) {
+            val q = DownloadManager.Query()
+            q.setFilterById(downloadId)
+            val cursor = downloadManager.query(q)
+            cursor.moveToFirst()
+            val bytes_downloaded = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+            val bytes_total = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+            if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
+                downloading = false
+            }
+            val dl_progress = (bytes_downloaded * 100L / bytes_total).toInt()
+            // 在这里你可以更新 UI，显示下载进度
+            cursor.close()
+        }
+    }
+
+    progressThread.start()
+        }
 
 binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
@@ -201,6 +249,51 @@ binding.buttonDownload.setOnClickListener {
 
             windowInsets
         }
+
+    fun processFile(driverFile: File) {
+
+    ProgressDialogFragment.newInstance(
+        requireActivity(),
+        R.string.installing_driver,
+        false
+    ) { _, _ ->
+        val driverPath =
+            "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
+        val driver = File(driverPath)
+
+        // Ignore file exceptions when a user selects an invalid zip
+        try {
+            if (!GpuDriverHelper.copyDriverToInternalStorage(driverFile)) {
+                throw IOException("Driver failed validation!")
+            }
+        } catch (_: IOException) {
+            if (driver.exists()) {
+                driver.delete()
+            }
+            return@newInstance getString(R.string.select_gpu_driver_error)
+        }
+
+        val driverData = GpuDriverHelper.getMetadataFromZip(driver)
+        val driverInList =
+            driverViewModel.driverData.firstOrNull { it.second == driverData }
+        if (driverInList != null) {
+            return@newInstance getString(R.string.driver_already_installed)
+        } else {
+            driverViewModel.onDriverAdded(Pair(driverPath, driverData))
+            withContext(Dispatchers.Main) {
+                if (_binding != null) {
+                    val adapter = binding.listDrivers.adapter as DriverAdapter
+                    adapter.addItem(driverData.toDriver())
+                    adapter.selectItem(adapter.currentList.indices.last)
+                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                    binding.listDrivers
+                        .smoothScrollToPosition(adapter.currentList.indices.last)
+                }
+            }
+        }
+        return@newInstance Any()
+    }.show(childFragmentManager, ProgressDialogFragment.TAG)
+    }
 
     private val getDriver =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
