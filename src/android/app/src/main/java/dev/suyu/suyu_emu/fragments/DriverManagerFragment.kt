@@ -251,21 +251,18 @@ binding.buttonDownload.setOnClickListener {
         }
 
                fun processFile(driverFile: File) {
-
-    ProgressDialogFragment.newInstance(
+                ProgressDialogFragment.newInstance(
         requireActivity(),
         R.string.installing_driver,
         false
     ) { _, _ ->
-        val driverPath =
-            "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
+        val driverPath = "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
         val driverFileTemp = File(driverPath)
-        val driverFileUri = Uri.fromFile(driverFileTemp) // 将 file 转换为 Uri
+        val driverFileUri = Uri.fromFile(driverFileTemp) // 将 File 转换为 Uri
 
         // Ignore file exceptions when a user selects an invalid zip
         try {
-            // 改为 Uri 类型的 driverFileUri
-            if (!GpuDriverHelper.copyDriverToInternalStorage(driverFileUri)) {
+            if (!GpuDriverHelper.copyDriverToInternalStorage(driverFileUri)) { 
                 throw IOException("Driver failed validation!")
             }
         } catch (_: IOException) {
