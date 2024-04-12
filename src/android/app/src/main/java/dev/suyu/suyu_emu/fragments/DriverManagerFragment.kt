@@ -256,7 +256,7 @@ binding.buttonDownload.setOnClickListener {
         R.string.installing_driver,
         false
     ) { _, _ ->
-        val driverPath = "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
+        val driverPath = "${GpuDriverHelper.driverStoragePath}${File.getFilename(driverFile)}"
         val driverFilePath = File(driverPath)
 
         // Ignore file exceptions when a user selects an invalid zip
