@@ -136,7 +136,6 @@ class DriverManagerFragment : Fragment() {
                     if (DownloadManager.STATUS_SUCCESSFUL == cursor.getInt(columnIndex)) {
                         val file =
                             File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
-                        processFile(file)
                     }
                 }
                 cursor.close()
@@ -249,51 +248,6 @@ binding.buttonDownload.setOnClickListener {
 
             windowInsets
         }
-
-               fun processFile(driverFile: File) {
-                ProgressDialogFragment.newInstance(
-        requireActivity(),
-        R.string.installing_driver,
-        false
-    ) { _, _ ->
-        val driverPath = "${GpuDriverHelper.driverStoragePath}${File.getFilename(driverFile)}"
-        val driverFilePath = File(driverPath)
-
-        // Ignore file exceptions when a user selects an invalid zip
-        try {
-            // Use the created File instance now instead of Uri
-            if (!GpuDriverHelper.copyDriverToInternalStorage(driverFilePath)) { 
-                throw IOException("Driver failed validation!")
-            }
-        } catch (_: IOException) {
-            if (driverFilePath.exists()) { 
-                driverFilePath.delete()
-            }
-
-            return@newInstance getString(R.string.select_gpu_driver_error)
-        }
-
-                val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
-                val driverInList =
-                    driverViewModel.driverData.firstOrNull { it.second == driverData }
-                if (driverInList != null) {
-                    return@newInstance getString(R.string.driver_already_installed)
-                } else {
-                    driverViewModel.onDriverAdded(Pair(driverPath, driverData))
-                    withContext(Dispatchers.Main) {
-                        if (_binding != null) {
-                            val adapter = binding.listDrivers.adapter as DriverAdapter
-                            adapter.addItem(driverData.toDriver())
-                            adapter.selectItem(adapter.currentList.indices.last)
-                            driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                            binding.listDrivers
-                                .smoothScrollToPosition(adapter.currentList.indices.last)
-                        }
-                    }
-                }
-                return@newInstance Any()
-            }.show(childFragmentManager, ProgressDialogFragment.TAG)
-    }
 
     private val getDriver =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
