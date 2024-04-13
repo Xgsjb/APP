@@ -117,7 +117,7 @@ class DriverManagerFragment : Fragment() {
         }
 
         fun downloadFile(context: Context, url: String, progressBar: ProgressBar, fileName: String) {
-    val downloadUrl = URL(url)
+    val downloadUrl = URL
     val connection = downloadUrl.openConnection() as HttpURLConnection
     connection.doInput = true
     connection.connect()
