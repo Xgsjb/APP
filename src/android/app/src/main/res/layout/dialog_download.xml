@@ -13,7 +13,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    < ProgressBar
+    <ProgressBar
         android:id="@+id/progressBar1"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -28,7 +28,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    < Button
+    <Button
         android:id="@+id/cancelButton1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -42,7 +42,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    < ProgressBar
+    <ProgressBar
         android:id="@+id/progressBar2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -57,7 +57,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    < Button
+    <Button
         android:id="@+id/cancelButton2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -71,7 +71,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    < ProgressBar
+    <ProgressBar
         android:id="@+id/progressBar3"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -86,7 +86,7 @@
         android:textSize="18sp"
         android:textStyle="bold" />
 
-    < Button
+    <Button
         android:id="@+id/cancelButton3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
