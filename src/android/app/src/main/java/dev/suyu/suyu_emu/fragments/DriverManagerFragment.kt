@@ -113,7 +113,7 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        private fun downloadFile(context: Context, url: String, fileName: String): Long {
+        fun downloadFile(context: Context, url: String, fileName: String): Long {
         val request = DownloadManager.Request(Uri.parse(url))
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
@@ -123,7 +123,7 @@ class DriverManagerFragment : Fragment() {
         return downloadManager.enqueue(request) // 返回下载任务的ID
     }
 
-    private fun handleDownloadedFile(downloadId: Long) {
+        fun handleDownloadedFile(downloadId: Long) {
         val downloadManager = requireActivity().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         val query = DownloadManager.Query().setFilterById(downloadId)
         val cursor = downloadManager.query(query)
@@ -181,7 +181,7 @@ binding.buttonDownload.setOnClickListener {
 }
         
 
-    private fun processFile(fileUri: Uri) {
+    fun processFile(fileUri: Uri) {
     ProgressDialogFragment.newInstance(
         requireActivity(),
         R.string.installing_driver,
