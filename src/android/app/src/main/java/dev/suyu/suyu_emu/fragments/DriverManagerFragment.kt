@@ -43,6 +43,7 @@ import android.os.Environment
 import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
+import android.widget.ProgressBar
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -113,31 +114,47 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String): Long {
-        val request = DownloadManager.Request(Uri.parse(url))
-        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-            .setTitle(fileName)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        return downloadManager.enqueue(request) // 返回下载任务的ID
-    }
+        fun downloadFile(context: Context, url: String, progressBar: ProgressBar, fileName: String) {
+    val downloadUrl = URL(url)
+    val connection = downloadUrl.openConnection() as HttpURLConnection
+    connection.doInput = true
+    connection.connect()
 
-        fun handleDownloadedFile(downloadId: Long) {
-        val downloadManager = requireActivity().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val query = DownloadManager.Query().setFilterById(downloadId)
-        val cursor = downloadManager.query(query)
-        if (cursor.moveToFirst()) {
-            val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-            val status = cursor.getInt(columnIndex)
-            if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                val fileUriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
-                val fileUri = Uri.parse(fileUriString)
-                processFile(fileUri) // 将Uri传递给processFile函数
+    val totalSize = connection.contentLength
+    val inputStream = downloadUrl.openStream()
+    val fileOutputStream = context.openFileOutput(fileName, Context.MODE_PRIVATE)
+
+    val buffer = ByteArray(1024)
+    var downloadedSize = 0
+    var percentage = 0
+
+    Thread {
+        try {
+            while (true) {
+                val count = inputStream.read(buffer)
+                if (count == -1) {
+                    break
+                }
+                fileOutputStream.write(buffer, 0, count)
+                downloadedSize += count
+                percentage = (downloadedSize * 100) / totalSize
+                activity.runOnUiThread {
+                    progressBar.progress = percentage
+                }
+            }
+            fileOutputStream.close()
+            inputStream.close()
+            activity.runOnUiThread {
+                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            activity.runOnUiThread {
+                Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
             }
         }
-        cursor.close()
-    }
+    }.start()
+}
 
 binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
@@ -146,10 +163,16 @@ binding.buttonDownload.setOnClickListener {
     // 获取布局中的文本视图
     val textTitle1 = dialogView.findViewById<TextView>(R.id.text_title1)
     val textDownload1 = dialogView.findViewById<TextView>(R.id.text_download1)
+    val progressBar1 = dialogView.findViewById<ProgressBar>(R.id.progressBar1)
+    val cancelButton1 = dialogView.findViewById<Button>(R.id.cancelButton1)
     val textTitle2 = dialogView.findViewById<TextView>(R.id.text_title2)
     val textDownload2 = dialogView.findViewById<TextView>(R.id.text_download2)
+    val progressBar2 = dialogView.findViewById<ProgressBar>(R.id.progressBar2)
+    val cancelButton2 = dialogView.findViewById<Button>(R.id.cancelButton2)
     val textTitle3 = dialogView.findViewById<TextView>(R.id.text_title3)
     val textDownload3 = dialogView.findViewById<TextView>(R.id.text_download3)
+    val progressBar3 = dialogView.findViewById<ProgressBar>(R.id.progressBar3)
+    val cancelButton3 = dialogView.findViewById<Button>(R.id.cancelButton3)
 
     // 设置标题文本
     textTitle1.text = "Turnip-24.1.0.adpkg_R18"
@@ -159,18 +182,15 @@ binding.buttonDownload.setOnClickListener {
     // 设置下载文本
     textDownload1.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
-        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip")
-        handleDownloadedFile(requireContext(), downloadId)
+        downloadFile(requireContext(), url, progressBar1, "Turnip-24.1.0.adpkg_R18.zip")
     }
     textDownload2.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
-        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip")
-        handleDownloadedFile(requireContext(), downloadId)
+        downloadFile(requireContext(), url, progressBar2, "Turnip-24.1.0.adpkg_R17.zip")
     }
     textDownload3.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
-        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip")
-        handleDownloadedFile(requireContext(), downloadId)
+        downloadFile(requireContext(), url, progressBar3, "Turnip-24.1.0.adpkg_R16.zip")
     }
 
     // 创建并显示对话框
@@ -179,51 +199,6 @@ binding.buttonDownload.setOnClickListener {
     val dialog = dialogBuilder.create()
     dialog.show()
 }
-        
-
-    fun processFile(fileUri: Uri) {
-    ProgressDialogFragment.newInstance(
-        requireActivity(),
-        R.string.installing_driver,
-        false
-    ) { _, _ ->
-        val driverPath =
-            "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
-        val driver = File(driverPath)
-
-        // Ignore file exceptions when a user selects an invalid zip
-        try {
-            if (!GpuDriverHelper.copyDriverToInternalStorage(driverFile)) {
-                throw IOException("Driver failed validation!")
-            }
-        } catch (_: IOException) {
-            if (driver.exists()) {
-                driver.delete()
-            }
-            return@newInstance getString(R.string.select_gpu_driver_error)
-        }
-
-        val driverData = GpuDriverHelper.getMetadataFromZip(driver)
-        val driverInList =
-            driverViewModel.driverData.firstOrNull { it.second == driverData }
-        if (driverInList != null) {
-            return@newInstance getString(R.string.driver_already_installed)
-        } else {
-            driverViewModel.onDriverAdded(Pair(driverPath, driverData))
-            withContext(Dispatchers.Main) {
-                if (_binding != null) {
-                    val adapter = binding.listDrivers.adapter as DriverAdapter
-                    adapter.addItem(driverData.toDriver())
-                    adapter.selectItem(adapter.currentList.indices.last)
-                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                    binding.listDrivers
-                        .smoothScrollToPosition(adapter.currentList.indices.last)
-                }
-            }
-        }
-        return@newInstance Any()
-    }.show(childFragmentManager, ProgressDialogFragment.TAG)
-        }
 
         binding.listDrivers.apply {
             layoutManager = GridLayoutManager(
