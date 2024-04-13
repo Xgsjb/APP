@@ -116,8 +116,8 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, progressBar: ProgressBar, fileName: String) {
-    val downloadUrl = URL
+        fun downloadFile(context: Context, url: String, fileName: String) {
+    val downloadUrl = URL(url)
     val connection = downloadUrl.openConnection() as HttpURLConnection
     connection.doInput = true
     connection.connect()
@@ -130,6 +130,13 @@ class DriverManagerFragment : Fragment() {
     var downloadedSize = 0
     var percentage = 0
 
+    val dialog = ProgressDialog(context)
+    dialog.setTitle("下载中")
+    dialog.setMessage("正在下载...")
+    dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+    dialog.setCanceledOnTouchOutside(false)
+    dialog.show()
+
     Thread {
         try {
             while (true) {
@@ -140,23 +147,21 @@ class DriverManagerFragment : Fragment() {
                 fileOutputStream.write(buffer, 0, count)
                 downloadedSize += count
                 percentage = (downloadedSize * 100) / totalSize
-                activity?.runOnUiThread {
-                    progressBar.progress = percentage
+                activity.runOnUiThread {
+                    dialog.progress = percentage
                 }
             }
             fileOutputStream.close()
             inputStream.close()
-            activity?.runOnUiThread {
-                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
-            }
+            dialog.dismiss()
+            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
         } catch (e: IOException) {
             e.printStackTrace()
-            activity?.runOnUiThread {
-                Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
-            }
+            dialog.dismiss()
+            Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
         }
-    }.start()
-}
+    }
+        }
 
 binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
