@@ -113,33 +113,31 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String): Long {
-    val request = DownloadManager.Request(Uri.parse(url))
-    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+        private fun downloadFile(context: Context, url: String, fileName: String): Long {
+        val request = DownloadManager.Request(Uri.parse(url))
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
             .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
             .setTitle(fileName)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    return dm.enqueue(request) // 返回下载任务的ID
-}
-
-fun handleDownloadedFile(context: Context, downloadId: Long) {
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val query = DownloadManager.Query().setFilterById(downloadId)
-    val cursor = dm.query(query)
-    if (cursor.moveToFirst()) {
-        val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-        if (status == DownloadManager.STATUS_SUCCESSFUL) {
-            // 下载成功
-            val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
-            val fileUri = Uri.parse(uriString)
-            val file = File(fileUri.path)
-            // 调用您的文件处理逻辑
-            processFile(file)
-        }
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        return downloadManager.enqueue(request) // 返回下载任务的ID
     }
-    cursor.close()
-}
+
+    private fun handleDownloadedFile(downloadId: Long) {
+        val downloadManager = requireActivity().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val query = DownloadManager.Query().setFilterById(downloadId)
+        val cursor = downloadManager.query(query)
+        if (cursor.moveToFirst()) {
+            val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+            val status = cursor.getInt(columnIndex)
+            if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                val fileUriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+                val fileUri = Uri.parse(fileUriString)
+                processFile(fileUri) // 将Uri传递给processFile函数
+            }
+        }
+        cursor.close()
+    }
 
 binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
@@ -183,8 +181,7 @@ binding.buttonDownload.setOnClickListener {
 }
         
 
-        fun processFile(driverFile: File) {
-
+    private fun processFile(fileUri: Uri) {
     ProgressDialogFragment.newInstance(
         requireActivity(),
         R.string.installing_driver,
