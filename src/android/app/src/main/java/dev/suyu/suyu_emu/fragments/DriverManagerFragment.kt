@@ -44,6 +44,8 @@ import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.widget.ProgressBar
+import java.net.HttpURLConnection
+import android.widget.Button
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -138,18 +140,18 @@ class DriverManagerFragment : Fragment() {
                 fileOutputStream.write(buffer, 0, count)
                 downloadedSize += count
                 percentage = (downloadedSize * 100) / totalSize
-                activity.runOnUiThread {
+                activity?.runOnUiThread {
                     progressBar.progress = percentage
                 }
             }
             fileOutputStream.close()
             inputStream.close()
-            activity.runOnUiThread {
+            activity?.runOnUiThread {
                 Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
             }
         } catch (e: IOException) {
             e.printStackTrace()
-            activity.runOnUiThread {
+            activity?.runOnUiThread {
                 Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
             }
         }
