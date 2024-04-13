@@ -113,60 +113,33 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String) {
-        val request = DownloadManager.Request(Uri.parse(url)).apply {
-        setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-        setTitle(fileName)
-        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-    }
+        fun downloadFile(context: Context, url: String, fileName: String): Long {
+    val request = DownloadManager.Request(Uri.parse(url))
+    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            .setTitle(fileName)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    return dm.enqueue(request) // 返回下载任务的ID
+}
 
-    val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val downloadId = downloadManager.enqueue(request)
-
-    val broadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
-                val query = DownloadManager.Query().setFilterById(
-                    intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, 0)
-                )
-                val cursor = downloadManager.query(query)
-                if (cursor.moveToFirst()) {
-                    val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
-                    if (DownloadManager.STATUS_SUCCESSFUL == cursor.getInt(columnIndex)) {
-                        val file =
-                            File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
-                        processFile(Uri)
-                    }
-                }
-                cursor.close()
-            }
+fun handleDownloadedFile(context: Context, downloadId: Long) {
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val query = DownloadManager.Query().setFilterById(downloadId)
+    val cursor = dm.query(query)
+    if (cursor.moveToFirst()) {
+        val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+            // 下载成功
+            val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+            val fileUri = Uri.parse(uriString)
+            val file = File(fileUri.path)
+            // 调用您的文件处理逻辑
+            processFile(file)
         }
     }
-
-    context.registerReceiver(broadcastReceiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
-
-    // 创建进度更新线程
-    val progressThread = Thread {
-        var downloading = true
-        while (downloading) {
-            val q = DownloadManager.Query()
-            q.setFilterById(downloadId)
-            val cursor = downloadManager.query(q)
-            cursor.moveToFirst()
-            val bytes_downloaded = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-            val bytes_total = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-            if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
-                downloading = false
-            }
-            val dl_progress = (bytes_downloaded * 100L / bytes_total).toInt()
-            // 在这里你可以更新 UI，显示下载进度
-            cursor.close()
-        }
-    }
-
-    progressThread.start()
-        }
+    cursor.close()
+}
 
 binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
@@ -188,15 +161,18 @@ binding.buttonDownload.setOnClickListener {
     // 设置下载文本
     textDownload1.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
-        downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip")
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip")
+        handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload2.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
-        downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip")
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip")
+        handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload3.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
-        downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip")
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip")
+        handleDownloadedFile(requireContext(), downloadId)
     }
 
     // 创建并显示对话框
@@ -205,39 +181,22 @@ binding.buttonDownload.setOnClickListener {
     val dialog = dialogBuilder.create()
     dialog.show()
 }
+        
 
-        binding.listDrivers.apply {
-            layoutManager = GridLayoutManager(
-                requireContext(),
-                resources.getInteger(R.integer.grid_columns)
-            )
-            adapter = DriverAdapter(driverViewModel)
-        }
+        fun processFile(driverFile: File) {
 
-        setInsets()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        driverViewModel.onCloseDriverManager(args.game)
-    }
-
-    fun processFile(driverFileUri: Uri) {
     ProgressDialogFragment.newInstance(
         requireActivity(),
         R.string.installing_driver,
         false
     ) { _, _ ->
-        // 从 Uri 对象获取文件名和路径
-        val driverFileName = FileUtil.getFilename(context, driverFileUri)
-        val driverPath = "${GpuDriverHelper.driverStoragePath}$driverFileName"
-        
+        val driverPath =
+            "${GpuDriverHelper.driverStoragePath}${FileUtil.getFilename(driverFile)}"
         val driver = File(driverPath)
 
         // Ignore file exceptions when a user selects an invalid zip
         try {
-            // 对原来的 copyDriverToInternalStorage 方法进行调整，使其接受一个 Uri 类型的参数，而不是 File 对象
-            if (!GpuDriverHelper.copyDriverToInternalStorage(context, driverFileUri)) {
+            if (!GpuDriverHelper.copyDriverToInternalStorage(driverFile)) {
                 throw IOException("Driver failed validation!")
             }
         } catch (_: IOException) {
@@ -267,6 +226,22 @@ binding.buttonDownload.setOnClickListener {
         }
         return@newInstance Any()
     }.show(childFragmentManager, ProgressDialogFragment.TAG)
+        }
+
+        binding.listDrivers.apply {
+            layoutManager = GridLayoutManager(
+                requireContext(),
+                resources.getInteger(R.integer.grid_columns)
+            )
+            adapter = DriverAdapter(driverViewModel)
+        }
+
+        setInsets()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        driverViewModel.onCloseDriverManager(args.game)
     }
 
     private fun setInsets() =
