@@ -116,8 +116,8 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String) {
-    val downloadUrl = URL(url)
+        fun downloadFile(context: Context, url: String, progressBar: ProgressBar, fileName: String) {
+    val request = DownloadManager.Request(Uri.parse(url))
     val connection = downloadUrl.openConnection() as HttpURLConnection
     connection.doInput = true
     connection.connect()
@@ -130,13 +130,6 @@ class DriverManagerFragment : Fragment() {
     var downloadedSize = 0
     var percentage = 0
 
-    val dialog = ProgressDialog(context)
-    dialog.setTitle("下载中")
-    dialog.setMessage("正在下载...")
-    dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-    dialog.setCanceledOnTouchOutside(false)
-    dialog.show()
-
     Thread {
         try {
             while (true) {
@@ -148,19 +141,21 @@ class DriverManagerFragment : Fragment() {
                 downloadedSize += count
                 percentage = (downloadedSize * 100) / totalSize
                 activity.runOnUiThread {
-                    dialog.progress = percentage
+                    progressBar.progress = percentage
                 }
             }
             fileOutputStream.close()
             inputStream.close()
-            dialog.dismiss()
-            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+            activity.runOnUiThread {
+                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+            }
         } catch (e: IOException) {
             e.printStackTrace()
-            dialog.dismiss()
-            Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
+            activity.runOnUiThread {
+                Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
+            }
         }
-    }
+    }.start()
         }
 
 binding.buttonDownload.setOnClickListener {
