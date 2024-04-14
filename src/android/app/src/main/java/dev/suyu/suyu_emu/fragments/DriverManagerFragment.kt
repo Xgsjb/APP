@@ -43,6 +43,8 @@ import androidx.appcompat.app.AlertDialog
 import java.io.File
 import java.util.Timer
 import java.util.TimerTask
+import android.view.LayoutInflater
+import android.view.ViewGroup
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
