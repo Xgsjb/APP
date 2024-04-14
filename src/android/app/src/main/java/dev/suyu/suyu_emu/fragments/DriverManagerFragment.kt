@@ -4,7 +4,6 @@
 package dev.suyu.suyu_emu.fragments
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,7 +30,6 @@ import dev.suyu.suyu_emu.utils.GpuDriverHelper
 import dev.suyu.suyu_emu.utils.NativeConfig
 import dev.suyu.suyu_emu.utils.ViewUtils.updateMargins
 import dev.suyu.suyu_emu.utils.collect
-import java.io.File
 import java.io.IOException
 import android.app.ProgressDialog
 import android.app.DownloadManager
@@ -40,7 +38,6 @@ import android.net.Uri
 import android.os.Environment
 import android.widget.TextView
 import android.widget.Toast
-import android.view.LayoutInflater
 import android.widget.ProgressBar
 import androidx.appcompat.app.AlertDialog
 import java.io.File
