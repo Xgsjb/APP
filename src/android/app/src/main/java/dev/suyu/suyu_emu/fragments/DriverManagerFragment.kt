@@ -183,6 +183,9 @@ binding.buttonDownload.setOnClickListener {
     // 显示ProgressDialog
     progressDialog.show()
 
+    // 设置ProgressDialog显示在其他对话框上方
+    progressDialog.window?.setGravity(Gravity.TOP)
+
     // 加载自定义布局
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
 
@@ -207,12 +210,12 @@ binding.buttonDownload.setOnClickListener {
     }
     textDownload2.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
-        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip", progressDialog)
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip", progressDialog)
         handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload3.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
-        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip", progressDialog)
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip", progressDialog)
         handleDownloadedFile(requireContext(), downloadId)
     }
     // 创建并显示对话框
