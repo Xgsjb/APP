@@ -117,6 +117,16 @@ class DriverManagerFragment : Fragment() {
         }
 
         binding.buttonDownload.setOnClickListener {
+    // 创建ProgressDialog
+    val progressDialog = ProgressDialog(requireContext())
+    progressDialog.setMessage("下载中...")
+    progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+    progressDialog.isIndeterminate = false
+    progressDialog.setCancelable(false)
+    
+    // 显示ProgressDialog
+    progressDialog.show()
+
     // 加载自定义布局
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
 
@@ -136,15 +146,18 @@ class DriverManagerFragment : Fragment() {
     // 设置下载文本
     textDownload1.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
-        showDownloadDialog(url, "Turnip-24.1.0.adpkg_R18.zip")
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip", progressDialog)
+        handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload2.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
-        showDownloadDialog(url, "Turnip-24.1.0.adpkg_R17.zip")
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip", progressDialog)
+        handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload3.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
-        showDownloadDialog(url, "Turnip-24.1.0.adpkg_R16.zip")
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip", progressDialog)
+        handleDownloadedFile(requireContext(), downloadId)
     }
 
     // 创建并显示对话框
@@ -152,50 +165,67 @@ class DriverManagerFragment : Fragment() {
     dialogBuilder.setView(dialogView)
     val dialog = dialogBuilder.create()
     dialog.show()
-        }
+}
 
-        private fun showDownloadDialog(url: String, fileName: String) {
-    // 创建进度条
-    val progressDialog = ProgressDialog(requireContext()).apply {
-        setMessage("Downloading $fileName")
-        setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-        setCancelable(false)
-        max = 100
-    }
-
-    // 显示进度条
-    progressDialog.show()
-
+fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
     val request = DownloadManager.Request(Uri.parse(url))
-        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
-        .setAllowedOverMetered(true)
-        .setAllowedOverRoaming(true)
+    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            .setTitle(fileName)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
 
-    val downloadManager = requireContext().getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val downloadId = downloadManager.enqueue(request)
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val downloadId = dm.enqueue(request)
 
-    // 使用Handler定期检查下载进度
-    val handler = Handler(Looper.getMainLooper())
-    handler.post(object : Runnable {
+    // 设置定时器来更新下载进度
+    val timer = Timer()
+    timer.scheduleAtFixedRate(object : TimerTask() {
         override fun run() {
             val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = downloadManager.query(query)
+            val cursor = dm.query(query)
             if (cursor.moveToFirst()) {
-                val bytesDownloaded = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                val bytesTotal = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                if (cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)) == DownloadManager.STATUS_SUCCESSFUL) {
-                    progressDialog.dismiss()
-                } else {
+                val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                if (status == DownloadManager.STATUS_RUNNING) {
+                    val bytesDownloaded = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val bytesTotal = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
                     val progress = (bytesDownloaded * 100L / bytesTotal).toInt()
+
+                    // 更新ProgressDialog的进度
                     progressDialog.progress = progress
-                    handler.postDelayed(this, 1000)
+                } else if (status == DownloadManager.STATUS_SUCCESSFUL || status == DownloadManager.STATUS_FAILED) {
+                    // 下载完成或失败，取消定时器
+                    timer.cancel()
+                    // 关闭ProgressDialog
+                    progressDialog.dismiss()
                 }
             }
             cursor.close()
         }
-    })
+    }, 0, 1000) // 每秒更新一次进度
+
+    return downloadId // 返回下载任务的ID
+}
+
+fun handleDownloadedFile(context: Context, downloadId: Long) {
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val query = DownloadManager.Query().setFilterById(downloadId)
+    val cursor = dm.query(query)
+    if (cursor.moveToFirst()) {
+        val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+            // 下载成功
+            val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+            val fileUri = Uri.parse(uriString)
+            val file = File(fileUri.path)
+            // 调用您的文件处理逻辑
+            processFile(file)
+            
+            // 显示下载完成提示
+            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
         }
+    }
+    cursor.close()
+}
 
         binding.listDrivers.apply {
             layoutManager = GridLayoutManager(
