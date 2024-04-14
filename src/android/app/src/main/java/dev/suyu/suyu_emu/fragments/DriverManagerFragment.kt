@@ -33,19 +33,19 @@ import dev.suyu.suyu_emu.utils.ViewUtils.updateMargins
 import dev.suyu.suyu_emu.utils.collect
 import java.io.File
 import java.io.IOException
-import android.app.AlertDialog
-import android.widget.TextView
-import android.widget.Toast
-import android.content.Context
+import android.app.ProgressDialog
 import android.app.DownloadManager
+import android.content.Context
 import android.net.Uri
 import android.os.Environment
-import android.content.BroadcastReceiver
-import android.content.Intent
-import android.content.IntentFilter
+import android.widget.TextView
+import android.widget.Toast
+import android.view.LayoutInflater
 import android.widget.ProgressBar
-import java.net.HttpURLConnection
-import android.widget.Button
+import androidx.appcompat.app.AlertDialog
+import java.io.File
+import java.util.Timer
+import java.util.TimerTask
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -217,8 +217,6 @@ fun handleDownloadedFile(context: Context, downloadId: Long) {
             val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
             val fileUri = Uri.parse(uriString)
             val file = File(fileUri.path)
-            // 调用您的文件处理逻辑
-            processFile(file)
             
             // 显示下载完成提示
             Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
