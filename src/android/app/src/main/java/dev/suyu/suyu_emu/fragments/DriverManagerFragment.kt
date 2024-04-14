@@ -116,90 +116,57 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, progressBar: ProgressBar, fileName: String) {
-    val request = DownloadManager.Request(Uri.parse(url))
-    val connection = downloadUrl.openConnection() as HttpURLConnection
-    connection.doInput = true
-    connection.connect()
-
-    val totalSize = connection.contentLength
-    val inputStream = downloadUrl.openStream()
-    val fileOutputStream = context.openFileOutput(fileName, Context.MODE_PRIVATE)
-
-    val buffer = ByteArray(1024)
-    var downloadedSize = 0
-    var percentage = 0
-
-    Thread {
-        try {
-            while (true) {
-                val count = inputStream.read(buffer)
-                if (count == -1) {
-                    break
-                }
-                fileOutputStream.write(buffer, 0, count)
-                downloadedSize += count
-                percentage = (downloadedSize * 100) / totalSize
-                activity.runOnUiThread {
-                    progressBar.progress = percentage
-                }
-            }
-            fileOutputStream.close()
-            inputStream.close()
-            activity.runOnUiThread {
-                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: IOException) {
-            e.printStackTrace()
-            activity.runOnUiThread {
-                Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }.start()
-        }
-
-binding.buttonDownload.setOnClickListener {
-    // 加载自定义布局
+        binding.buttonDownload.setOnClickListener {
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
 
-    // 获取布局中的文本视图
     val textTitle1 = dialogView.findViewById<TextView>(R.id.text_title1)
     val textDownload1 = dialogView.findViewById<TextView>(R.id.text_download1)
-    val progressBar1 = dialogView.findViewById<ProgressBar>(R.id.progressBar1)
-    val cancelButton1 = dialogView.findViewById<Button>(R.id.cancelButton1)
     val textTitle2 = dialogView.findViewById<TextView>(R.id.text_title2)
     val textDownload2 = dialogView.findViewById<TextView>(R.id.text_download2)
-    val progressBar2 = dialogView.findViewById<ProgressBar>(R.id.progressBar2)
-    val cancelButton2 = dialogView.findViewById<Button>(R.id.cancelButton2)
     val textTitle3 = dialogView.findViewById<TextView>(R.id.text_title3)
     val textDownload3 = dialogView.findViewById<TextView>(R.id.text_download3)
-    val progressBar3 = dialogView.findViewById<ProgressBar>(R.id.progressBar3)
-    val cancelButton3 = dialogView.findViewById<Button>(R.id.cancelButton3)
 
-    // 设置标题文本
     textTitle1.text = "Turnip-24.1.0.adpkg_R18"
     textTitle2.text = "Turnip-24.1.0.adpkg_R17"
     textTitle3.text = "Turnip-24.1.0.adpkg_R16"
 
-    // 设置下载文本
     textDownload1.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
-        downloadFile(requireContext(), url, progressBar1, "Turnip-24.1.0.adpkg_R18.zip")
+        downloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip")
     }
     textDownload2.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
-        downloadFile(requireContext(), url, progressBar2, "Turnip-24.1.0.adpkg_R17.zip")
+        downloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip")
     }
     textDownload3.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
-        downloadFile(requireContext(), url, progressBar3, "Turnip-24.1.0.adpkg_R16.zip")
+        downloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip")
     }
 
-    // 创建并显示对话框
     val dialogBuilder = AlertDialog.Builder(requireContext())
     dialogBuilder.setView(dialogView)
     val dialog = dialogBuilder.create()
     dialog.show()
+}
+
+fun downloadFileWithManager(context: Context, url:String, fileName:String) {
+    val request = DownloadManager.Request(Uri.parse(url)).apply {
+        setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+    }
+
+    val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val downloadId = manager.enqueue(request)
+
+    context.registerReceiver(object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (id == downloadId) {
+                Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
 }
 
         binding.listDrivers.apply {
