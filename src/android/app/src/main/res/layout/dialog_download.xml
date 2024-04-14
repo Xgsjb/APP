@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -11,28 +10,18 @@
         android:layout_height="wrap_content"
         android:text="Turnip-24.1.0.adpkg_R18"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
 
-    <ProgressBar
-        android:id="@+id/progressBar1"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:indeterminate="false" />
-   
     <TextView
         android:id="@+id/text_download1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="下载"
         android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/cancelButton1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="取消下载" />
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
 
     <TextView
         android:id="@+id/text_title2"
@@ -40,28 +29,19 @@
         android:layout_height="wrap_content"
         android:text="Turnip-24.1.0.adpkg_R17"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
 
-    <ProgressBar
-        android:id="@+id/progressBar2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:indeterminate="false" />
-   
     <TextView
         android:id="@+id/text_download2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="下载"
         android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/cancelButton2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="取消下载" />
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
 
     <TextView
         android:id="@+id/text_title3"
@@ -69,27 +49,16 @@
         android:layout_height="wrap_content"
         android:text="Turnip-24.1.0.adpkg_R16"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"/>
 
-    <ProgressBar
-        android:id="@+id/progressBar3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:indeterminate="false" />
-    
     <TextView
         android:id="@+id/text_download3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="下载"
         android:textSize="18sp"
-        android:textStyle="bold" />
-
-    <Button
-        android:id="@+id/cancelButton3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="取消下载" />
-
+        android:textStyle="bold"
+        android:layout_marginTop="4dp"/>
 </LinearLayout>
