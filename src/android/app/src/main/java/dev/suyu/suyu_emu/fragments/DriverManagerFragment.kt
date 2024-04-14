@@ -132,15 +132,15 @@ class DriverManagerFragment : Fragment() {
 
     textDownload1.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
-        downloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip")
+        DownloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip")
     }
     textDownload2.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
-        downloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip")
+        DownloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip")
     }
     textDownload3.setOnClickListener {
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
-        downloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip")
+        DownloadFileWithManager(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip")
     }
 
     val dialogBuilder = AlertDialog.Builder(requireContext())
