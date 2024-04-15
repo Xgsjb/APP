@@ -153,11 +153,6 @@ class DriverManagerFragment : Fragment() {
                     timer.cancel()
                     // 关闭ProgressDialog
                     progressDialog.dismiss()
-
-                    // 下载完成，处理已下载的文件
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        handleDownloadedFile(requireContext(), downloadId)
-                    }
                 }
             }
             cursor.close()
