@@ -186,7 +186,6 @@ class DriverManagerFragment : Fragment() {
 
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
         val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip", progressDialog)
-        handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload2.setOnClickListener {
         // 创建ProgressDialog
@@ -201,7 +200,6 @@ class DriverManagerFragment : Fragment() {
 
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
         val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip", progressDialog)
-        handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload3.setOnClickListener {
         // 创建ProgressDialog
@@ -216,7 +214,6 @@ class DriverManagerFragment : Fragment() {
 
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
         val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip", progressDialog)
-        handleDownloadedFile(requireContext(), downloadId)
     }
     // 创建并显示对话框
     val dialogBuilder = AlertDialog.Builder(requireContext())
