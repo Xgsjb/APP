@@ -156,7 +156,7 @@ class DriverManagerFragment : Fragment() {
 
                     // 下载完成，处理已下载的文件
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        handleDownloadedFile(context, downloadId)
+                        handleDownloadedFile(requireContext(), downloadId)
                     }
                 }
             }
