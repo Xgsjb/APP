@@ -44,6 +44,7 @@ import java.io.File
 import java.util.Timer
 import java.util.TimerTask
 import android.view.LayoutInflater
+import android.view.WindowManager
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
