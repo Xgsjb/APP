@@ -116,9 +116,17 @@ class DriverManagerFragment : Fragment() {
         }
 
         fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
+    val externalDir = context.getExternalFilesDir(null)
+    val downloadDir = File(externalDir, "gpu_drivers")
+
+    // 创建下载目录
+    if (!downloadDir.exists()) {
+        downloadDir.mkdirs()
+    }
+
     val request = DownloadManager.Request(Uri.parse(url))
     request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            .setDestinationUri(Uri.fromFile(File(downloadDir, fileName)))
             .setTitle(fileName)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
 
@@ -141,10 +149,12 @@ class DriverManagerFragment : Fragment() {
                     // 更新ProgressDialog的进度
                     progressDialog.progress = progress
                 } else if (status == DownloadManager.STATUS_SUCCESSFUL || status == DownloadManager.STATUS_FAILED) {
-                    // 下载完成或失败，取消定时器
+                    // 取消定时器
                     timer.cancel()
                     // 关闭ProgressDialog
                     progressDialog.dismiss()
+                    // 处理下载完成的文件
+                    handleDownloadedFile(context, downloadId)
                 }
             }
             cursor.close()
@@ -164,16 +174,30 @@ fun handleDownloadedFile(context: Context, downloadId: Long) {
             // 下载成功
             val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
             val fileUri = Uri.parse(uriString)
-            val driverFile = File(fileUri.path)
+            val file = File(fileUri.path)
 
-            // 将下载的文件传递给 getDriver 代码
-            getDriver(driverFile)
+            // 显示下载完成提示
+            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+
+            // 添加你提供的代码
+            val driverData = GpuDriverHelper.getMetadataFromZip(file)
+            // 更新 UI
+            driverViewModel.onDriverAdded(Pair(file, driverData))
+            withContext(Dispatchers.Main) {
+                if (_binding != null) {
+                    val adapter = binding.listDrivers.adapter as DriverAdapter
+                    adapter.addItem(driverData.toDriver())
+                    adapter.selectItem(adapter.currentList.indices.last)
+                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                    binding.listDrivers
+                        .smoothScrollToPosition(adapter.currentList.indices.last)
+            }
         }
     }
     cursor.close()
-}
+    }
 
-binding.buttonDownload.setOnClickListener {
+        binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
 
@@ -241,7 +265,7 @@ binding.buttonDownload.setOnClickListener {
     dialogBuilder.setView(dialogView)
     val dialog = dialogBuilder.create()
     dialog.show()
-}
+        }
 
         binding.listDrivers.apply {
             layoutManager = GridLayoutManager(
@@ -286,24 +310,6 @@ binding.buttonDownload.setOnClickListener {
 
             windowInsets
         }
-
-    private val getDriver = CoroutineScope(Dispatchers.IO).launch {
-    // 传入文件数据
-    val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
-
-    // 更新 UI
-    withContext(Dispatchers.Main) {
-        driverViewModel.onDriverAdded(Pair(driverFile.path, driverData))
-        if (_binding != null) {
-            val adapter = binding.listDrivers.adapter as DriverAdapter
-            adapter.addItem(driverData.toDriver())
-            adapter.selectItem(adapter.currentList.indices.last)
-            driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-            binding.listDrivers
-                .smoothScrollToPosition(adapter.currentList.indices.last)
-        }
-    }
-    }
 
     private val getDriver =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
