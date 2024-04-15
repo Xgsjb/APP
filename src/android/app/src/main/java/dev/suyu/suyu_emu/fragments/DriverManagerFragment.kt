@@ -45,6 +45,8 @@ import java.util.Timer
 import java.util.TimerTask
 import android.view.LayoutInflater
 import android.view.WindowManager
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -135,7 +137,7 @@ class DriverManagerFragment : Fragment() {
     return downloadId
 }
 
-private fun handleDownloadedFile(context: Context, downloadId: Long, progressDialog: ProgressDialog) {
+fun handleDownloadedFile(context: Context, downloadId: Long, progressDialog: ProgressDialog) {
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
     context.registerReceiver(object : BroadcastReceiver() {
