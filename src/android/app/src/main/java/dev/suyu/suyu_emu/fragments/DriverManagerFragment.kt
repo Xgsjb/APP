@@ -164,10 +164,10 @@ fun handleDownloadedFile(context: Context, downloadId: Long) {
             // 下载成功
             val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
             val fileUri = Uri.parse(uriString)
-            val file = File(fileUri.path)
-            
-            // 显示下载完成提示
-            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+            val driverFile = File(fileUri.path)
+
+            // 将下载的文件传递给 getDriver 代码
+            getDriver(driverFile)
         }
     }
     cursor.close()
@@ -286,6 +286,24 @@ binding.buttonDownload.setOnClickListener {
 
             windowInsets
         }
+
+    private val getDriver = CoroutineScope(Dispatchers.IO).launch {
+    // 传入文件数据
+    val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
+
+    // 更新 UI
+    withContext(Dispatchers.Main) {
+        driverViewModel.onDriverAdded(Pair(driverFile.path, driverData))
+        if (_binding != null) {
+            val adapter = binding.listDrivers.adapter as DriverAdapter
+            adapter.addItem(driverData.toDriver())
+            adapter.selectItem(adapter.currentList.indices.last)
+            driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+            binding.listDrivers
+                .smoothScrollToPosition(adapter.currentList.indices.last)
+        }
+    }
+    }
 
     private val getDriver =
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
