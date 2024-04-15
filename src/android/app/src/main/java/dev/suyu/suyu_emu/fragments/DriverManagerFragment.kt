@@ -174,18 +174,6 @@ fun handleDownloadedFile(context: Context, downloadId: Long) {
 }
 
 binding.buttonDownload.setOnClickListener {
-    val progressDialog = ProgressDialog(getContext())
-    progressDialog.setMessage("下载中...")
-    progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-    progressDialog.isIndeterminate = false
-    progressDialog.setCancelable(false)
-
-// 设置ProgressDialog的层级
-progressDialog.window?.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
-
-// 显示ProgressDialog
-progressDialog.show()
-
     // 加载自定义布局
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
 
@@ -204,16 +192,46 @@ progressDialog.show()
 
     // 设置下载文本
     textDownload1.setOnClickListener {
+        // 创建ProgressDialog
+        val progressDialog = ProgressDialog(requireContext())
+        progressDialog.setMessage("下载中...")
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog.isIndeterminate = false
+        progressDialog.setCancelable(false)
+        
+        // 显示ProgressDialog
+        progressDialog.show()
+
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
         val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip", progressDialog)
         handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload2.setOnClickListener {
+        // 创建ProgressDialog
+        val progressDialog = ProgressDialog(requireContext())
+        progressDialog.setMessage("下载中...")
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog.isIndeterminate = false
+        progressDialog.setCancelable(false)
+        
+        // 显示ProgressDialog
+        progressDialog.show()
+
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
         val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip", progressDialog)
         handleDownloadedFile(requireContext(), downloadId)
     }
     textDownload3.setOnClickListener {
+        // 创建ProgressDialog
+        val progressDialog = ProgressDialog(requireContext())
+        progressDialog.setMessage("下载中...")
+        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+        progressDialog.isIndeterminate = false
+        progressDialog.setCancelable(false)
+        
+        // 显示ProgressDialog
+        progressDialog.show()
+
         val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
         val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip", progressDialog)
         handleDownloadedFile(requireContext(), downloadId)
