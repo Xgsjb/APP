@@ -115,9 +115,7 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-     fun downloadFile(url: String, fileName: String, progressDialog: ProgressDialog): Long {
-    val context = requireContext() // 获取 Fragment 的上下文
-
+        fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
     val externalDir = context.getExternalFilesDir(null)
     val downloadDir = File(externalDir, "gpu_drivers")
 
@@ -155,7 +153,11 @@ class DriverManagerFragment : Fragment() {
                     timer.cancel()
                     // 关闭ProgressDialog
                     progressDialog.dismiss()
-                    handleDownloadedFile(context, downloadId, fileName)
+
+                    // 下载完成，处理已下载的文件
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        handleDownloadedFile(context, downloadId)
+                    }
                 }
             }
             cursor.close()
@@ -165,8 +167,7 @@ class DriverManagerFragment : Fragment() {
     return downloadId // 返回下载任务的ID
 }
 
-// 在下载文件后调用此函数，传递下载任务的ID和下载的文件路径
-fun handleDownloadedFile(context: Context, downloadId: Long, fileName: String) {
+fun handleDownloadedFile(context: Context, downloadId: Long) {
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     val query = DownloadManager.Query().setFilterById(downloadId)
     val cursor = dm.query(query)
@@ -176,22 +177,10 @@ fun handleDownloadedFile(context: Context, downloadId: Long, fileName: String) {
             // 下载成功
             val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
             val fileUri = Uri.parse(uriString)
-            val driverFile = File(context.getExternalFilesDir(null), "gpu_drivers/$fileName")
-            
-            // 调用你的代码块来处理下载好的文件
-            val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
-            driverViewModel.onDriverAdded(Pair(driverFilePath, driverData))
-            // 确保在主线程更新 UI
-            withContext(Dispatchers.Main) {
-                if (_binding != null) {
-                    val adapter = binding.listDrivers.adapter as DriverAdapter
-                    adapter.addItem(driverData.toDriver())
-                    adapter.selectItem(adapter.currentList.indices.last)
-                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                    binding.listDrivers
-                        .smoothScrollToPosition(adapter.currentList.indices.last)
-                }
-            }
+            val file = File(fileUri.path)
+
+            // 显示下载完成提示
+            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
         }
     }
     cursor.close()
