@@ -44,7 +44,6 @@ import java.io.File
 import java.util.Timer
 import java.util.TimerTask
 import android.view.LayoutInflater
-import android.view.Gravity
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -174,18 +173,17 @@ fun handleDownloadedFile(context: Context, downloadId: Long) {
 }
 
 binding.buttonDownload.setOnClickListener {
-    // 创建ProgressDialog
-    val progressDialog = ProgressDialog(requireContext())
+    val progressDialog = ProgressDialog(getContext())
     progressDialog.setMessage("下载中...")
     progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
     progressDialog.isIndeterminate = false
     progressDialog.setCancelable(false)
-    
-    // 显示ProgressDialog
-    progressDialog.show()
 
-    // 设置ProgressDialog显示在其他对话框上方
-    progressDialog.window?.setGravity(Gravity.TOP)
+// 设置ProgressDialog的层级
+progressDialog.window?.setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT)
+
+// 显示ProgressDialog
+progressDialog.show()
 
     // 加载自定义布局
     val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
