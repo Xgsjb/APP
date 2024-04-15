@@ -115,7 +115,9 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-     fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
+     fun downloadFile(url: String, fileName: String, progressDialog: ProgressDialog): Long {
+    val context = requireContext() // 获取 Fragment 的上下文
+
     val externalDir = context.getExternalFilesDir(null)
     val downloadDir = File(externalDir, "gpu_drivers")
 
@@ -153,7 +155,7 @@ class DriverManagerFragment : Fragment() {
                     timer.cancel()
                     // 关闭ProgressDialog
                     progressDialog.dismiss()
-                    handleDownloadedFile(requireContext, downloadId)
+                    handleDownloadedFile(context, downloadId, fileName)
                 }
             }
             cursor.close()
@@ -164,7 +166,7 @@ class DriverManagerFragment : Fragment() {
 }
 
 // 在下载文件后调用此函数，传递下载任务的ID和下载的文件路径
-fun handleDownloadedFile(context: Context, downloadId: Long, driverFilePath: String) {
+fun handleDownloadedFile(context: Context, downloadId: Long, fileName: String) {
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
     val query = DownloadManager.Query().setFilterById(downloadId)
     val cursor = dm.query(query)
@@ -174,7 +176,7 @@ fun handleDownloadedFile(context: Context, downloadId: Long, driverFilePath: Str
             // 下载成功
             val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
             val fileUri = Uri.parse(uriString)
-            val driverFile = File(driverFilePath) // 使用传递的文件路径来创建文件对象
+            val driverFile = File(context.getExternalFilesDir(null), "gpu_drivers/$fileName")
             
             // 调用你的代码块来处理下载好的文件
             val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
