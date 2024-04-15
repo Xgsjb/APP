@@ -47,6 +47,7 @@ import android.view.LayoutInflater
 import android.view.WindowManager
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
+import android.content.Intent
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -132,13 +133,6 @@ class DriverManagerFragment : Fragment() {
     val downloadId = dm?.enqueue(request) ?: -1
 
     // 注册监听器来更新下载进度
-    handleDownloadedFile(context, downloadId, progressDialog)
-
-    return downloadId
-}
-
-fun handleDownloadedFile(context: Context, downloadId: Long, progressDialog: ProgressDialog) {
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
     context.registerReceiver(object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -157,7 +151,9 @@ fun handleDownloadedFile(context: Context, downloadId: Long, progressDialog: Pro
             }
         }
     }, filter)
-}
+
+    return downloadId
+        }
 
         binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
