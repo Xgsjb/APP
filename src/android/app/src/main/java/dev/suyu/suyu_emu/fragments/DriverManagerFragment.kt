@@ -116,69 +116,45 @@ class DriverManagerFragment : Fragment() {
         }
 
         fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
-    val externalDir = context.getExternalFilesDir(null)
-    val downloadDir = File(externalDir, "gpu_drivers")
+    val downloadDir = context.getExternalFilesDir(null)?.let { File(it, "gpu_drivers") }
+    downloadDir?.mkdirs()
 
-    // 创建下载目录
-    if (!downloadDir.exists()) {
-        downloadDir.mkdirs()
+    val request = DownloadManager.Request(Uri.parse(url)).apply {
+        setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
+        setDestinationUri(Uri.fromFile(File(downloadDir, fileName)))
+        setTitle(fileName)
+        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
     }
 
-    val request = DownloadManager.Request(Uri.parse(url))
-    request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-            .setDestinationUri(Uri.fromFile(File(downloadDir, fileName)))
-            .setTitle(fileName)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+    val downloadId = dm?.enqueue(request) ?: -1
 
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val downloadId = dm.enqueue(request)
+    // 注册监听器来更新下载进度
+    handleDownloadedFile(context, downloadId, progressDialog)
 
-    // 设置定时器来更新下载进度
-    val timer = Timer()
-    timer.scheduleAtFixedRate(object : TimerTask() {
-        override fun run() {
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = dm.query(query)
-            if (cursor.moveToFirst()) {
-                val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-                if (status == DownloadManager.STATUS_RUNNING) {
-                    val bytesDownloaded = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                    val bytesTotal = cursor.getLong(cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                    val progress = (bytesDownloaded * 100L / bytesTotal).toInt()
-
-                    // 更新ProgressDialog的进度
-                    progressDialog.progress = progress
-                } else if (status == DownloadManager.STATUS_SUCCESSFUL || status == DownloadManager.STATUS_FAILED) {
-                    // 取消定时器
-                    timer.cancel()
-                    // 关闭ProgressDialog
-                    progressDialog.dismiss()
-                }
-            }
-            cursor.close()
-        }
-    }, 0, 1000) // 每秒更新一次进度
-
-    return downloadId // 返回下载任务的ID
+    return downloadId
 }
 
-fun handleDownloadedFile(context: Context, downloadId: Long) {
-    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val query = DownloadManager.Query().setFilterById(downloadId)
-    val cursor = dm.query(query)
-    if (cursor.moveToFirst()) {
-        val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
-        if (status == DownloadManager.STATUS_SUCCESSFUL) {
-            // 下载成功
-            val uriString = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
-            val fileUri = Uri.parse(uriString)
-            val file = File(fileUri.path)
-
-            // 显示下载完成提示
-            Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+private fun handleDownloadedFile(context: Context, downloadId: Long, progressDialog: ProgressDialog) {
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+    val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+    context.registerReceiver(object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val query = DownloadManager.Query().setFilterById(downloadId)
+            val cursor = dm?.query(query)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val status = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        // 下载成功
+                        progressDialog.dismiss()
+                        // 显示下载完成提示
+                        Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
         }
-    }
-    cursor.close()
+    }, filter)
 }
 
         binding.buttonDownload.setOnClickListener {
