@@ -144,8 +144,44 @@ class DriverManagerFragment : Fragment() {
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
                         // 下载成功
                         progressDialog.dismiss()
-                        // 显示下载完成提示
-                        Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
+                        // 获取下载的文件
+                        val downloadedFileUri = dm.getUriForDownloadedFile(downloadId)
+                        val downloadedFile = File(downloadedFileUri.path)
+                        // 处理下载的文件
+                        try {
+                            if (!GpuDriverHelper.copyDriverToInternalStorage(downloadedFile)) {
+                                throw IOException("Driver failed validation!")
+                            }
+                        } catch (_: IOException) {
+                            if (downloadedFile.exists()) {
+                                downloadedFile.delete()
+                            }
+                            Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
+                            return
+                        }
+
+                        val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
+                        val driverInList =
+                            driverViewModel.driverData.firstOrNull { it.second == driverData }
+                        if (driverInList != null) {
+                            Toast.makeText(context, "驱动已安装", Toast.LENGTH_SHORT).show()
+                        } else {
+                            driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
+                            withContext(Dispatchers.Main) {
+                                if (_binding != null) {
+                                    val adapter = binding.listDrivers.adapter as DriverAdapter
+                                    adapter.addItem(driverData.toDriver())
+                                    adapter.selectItem(adapter.currentList.indices.last)
+                                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                                    binding.listDrivers
+                                        .smoothScrollToPosition(adapter.currentList.indices.last)
+                                }
+                            }
+                        }
+                    } else if (status == DownloadManager.STATUS_FAILED) {
+                        // 下载失败
+                        progressDialog.dismiss()
+                        Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
