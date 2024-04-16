@@ -121,7 +121,7 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
+       fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
     val downloadDir = context.getExternalFilesDir(null)?.let { File(it, "gpu_drivers") }
     downloadDir?.mkdirs()
 
@@ -150,19 +150,21 @@ class DriverManagerFragment : Fragment() {
                         // 显示下载完成提示
                         Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
 
-                        // 获取驱动文件并执行操作
-                        val driverDirectory = File(GpuDriverHelper.driverStoragePath)
-                        if (driverDirectory.exists() && driverDirectory.isDirectory) {
-                            val driverFiles = driverDirectory.listFiles()
-                            if (driverFiles.isNotEmpty()) {
-                                // 如果目录不为空，则直接获取第一个文件执行后续操作
-                                val firstDriverFile = driverFiles[0]
-                                val driverData = GpuDriverHelper.getMetadataFromZip(firstDriverFile)
+                        // 执行你的操作
+                        val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
+                        val driverZipPath = "$externalStoragePath/gpu_drivers"
+                        val driverFile = File(driverZipPath)
+
+                        if (driverFile.exists() && driverFile.isDirectory) {
+                            val zipFiles = driverFile.listFiles { file -> file.isFile && file.extension == "zip" }
+                            zipFiles?.forEach { zipFile ->
+                                val driverData = GpuDriverHelper.getMetadataFromZip(zipFile)
                                 val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
                                 if (driverInList != null) {
-                                    Toast.makeText(context, getString(R.string.driver_already_installed), Toast.LENGTH_SHORT).show()
+                                    // 如果驱动程序已经在列表中，则执行相应操作（可以留空）
                                 } else {
-                                    driverViewModel.onDriverAdded(Pair(firstDriverFile.absolutePath, driverData))
+                                    // 如果驱动程序不在列表中，则添加到列表并更新界面
+                                    driverViewModel.onDriverAdded(Pair(driverZipPath, driverData))
                                     handler.post {
                                         if (_binding != null) {
                                             val adapter = binding.listDrivers.adapter as DriverAdapter
@@ -175,6 +177,14 @@ class DriverManagerFragment : Fragment() {
                                     }
                                 }
                             }
+                            // Dismiss progress dialog after processing
+                            progressDialog.dismiss()
+                            // Show a message indicating processing completion
+                            Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // 如果没有找到驱动程序压缩文件，则显示相应的消息
+                            progressDialog.dismiss()
+                            Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
                         }
                     } else if (status == DownloadManager.STATUS_FAILED) {
                         // 下载失败
@@ -188,29 +198,7 @@ class DriverManagerFragment : Fragment() {
     }, filter)
 
     return downloadId
-        }
-
-    // 定时更新进度条
-    val handler = Handler(Looper.getMainLooper())
-    val progressRunnable = object : Runnable {
-        override fun run() {
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = dm?.query(query)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val bytesDownloaded = it.getLong(it.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                    val bytesTotal = it.getLong(it.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                    val progress = (bytesDownloaded * 100L / bytesTotal).toInt()
-                    progressDialog.progress = progress
-                }
-            }
-            handler.postDelayed(this, 1000) // 更新间隔为1秒
-        }
-    }
-    handler.post(progressRunnable)
-
-    return downloadId
-        }
+       }
 
         binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
