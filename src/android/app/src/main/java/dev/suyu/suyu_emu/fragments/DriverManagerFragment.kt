@@ -118,13 +118,13 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
+        fun downloadAndExecute(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
     val downloadDir = context.getExternalFilesDir(null)?.let { File(it, "gpu_drivers") }
     downloadDir?.mkdirs()
 
     val request = DownloadManager.Request(Uri.parse(url)).apply {
         setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-        setDestinationInExternalFilesDir(context, "gpu_drivers", fileName)
+        setDestinationUri(Uri.fromFile(File(downloadDir, fileName)))
         setTitle(fileName)
         setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
     }
@@ -144,49 +144,61 @@ class DriverManagerFragment : Fragment() {
                     if (status == DownloadManager.STATUS_SUCCESSFUL) {
                         // 下载成功
                         progressDialog.dismiss()
-                        // 获取下载的文件
-                        val downloadedFileUri = dm.getUriForDownloadedFile(downloadId)
-                        val downloadedFile = File(downloadedFileUri.path)
-                        // 处理下载的文件
-                        try {
-                            if (!GpuDriverHelper.copyDriverToInternalStorage(downloadedFile)) {
-                                throw IOException("Driver failed validation!")
-                            }
-                        } catch (_: IOException) {
-                            if (downloadedFile.exists()) {
-                                downloadedFile.delete()
-                            }
-                            Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
-                            return
-                        }
+                        // 显示下载完成提示
+                        Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
 
-                        val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
-                        val driverInList =
-                            driverViewModel.driverData.firstOrNull { it.second == driverData }
-                        if (driverInList != null) {
-                            Toast.makeText(context, "驱动已安装", Toast.LENGTH_SHORT).show()
-                        } else {
-                            driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
-                            GlobalScope.launch(Dispatchers.Main) {
-                                if (_binding != null) {
-                                    val adapter = binding.listDrivers.adapter as DriverAdapter
-                                    adapter.addItem(driverData.toDriver())
-                                    adapter.selectItem(adapter.currentList.indices.last)
-                                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                                    binding.listDrivers
-                                        .smoothScrollToPosition(adapter.currentList.indices.last)
+                        // 执行你的操作
+                        val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
+                        val driverZipPath = "$externalStoragePath/gpu_drivers"
+                        val driverFile = File(driverZipPath)
+
+                        if(driverFile.exists()) {
+                            val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
+                            val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
+                            if (driverInList != null) {
+                                return@newInstance getString(R.string.driver_already_installed)
+                            } else {
+                                driverViewModel.onDriverAdded(Pair(driverPath, driverData))
+                                withContext(Dispatchers.Main) {
+                                    if (_binding != null) {
+                                        val adapter = binding.listDrivers.adapter as DriverAdapter
+                                        adapter.addItem(driverData.toDriver())
+                                        adapter.selectItem(adapter.currentList.indices.last)
+                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                                        binding.listDrivers
+                                            .smoothScrollToPosition(adapter.currentList.indices.last)
+                                    }
                                 }
                             }
+                            return@newInstance Any()
                         }
                     } else if (status == DownloadManager.STATUS_FAILED) {
                         // 下载失败
                         progressDialog.dismiss()
+                        // 显示下载失败提示
                         Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         }
     }, filter)
+
+    // 更新进度条
+    val progressFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_CHANGED)
+    context.registerReceiver(object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val query = DownloadManager.Query().setFilterById(downloadId)
+            val cursor = dm?.query(query)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val bytesDownloaded = it.getLong(it.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val bytesTotal = it.getLong(it.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    val progress = (bytesDownloaded * 100L / bytesTotal).toInt()
+                    progressDialog.progress = progress
+                }
+            }
+        }
+    }, progressFilter)
 
     return downloadId
         }
