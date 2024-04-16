@@ -48,6 +48,7 @@ import android.view.WindowManager
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.content.Intent
+import android.app.Activity
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -182,10 +183,10 @@ class DriverManagerFragment : Fragment() {
         }
     }, filter)
 
-    // 更新进度条
-    val progressFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_STATUS_CHANGED)
-    context.registerReceiver(object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
+    // 定时更新进度条
+    val handler = Handler(Looper.getMainLooper())
+    val progressRunnable = object : Runnable {
+        override fun run() {
             val query = DownloadManager.Query().setFilterById(downloadId)
             val cursor = dm?.query(query)
             cursor?.use {
@@ -196,8 +197,10 @@ class DriverManagerFragment : Fragment() {
                     progressDialog.progress = progress
                 }
             }
+            handler.postDelayed(this, 1000) // 更新间隔为1秒
         }
-    }, progressFilter)
+    }
+    handler.post(progressRunnable)
 
     return downloadId
         }
