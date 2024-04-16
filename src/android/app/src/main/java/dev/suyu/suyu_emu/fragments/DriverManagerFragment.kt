@@ -124,7 +124,7 @@ class DriverManagerFragment : Fragment() {
 
     val request = DownloadManager.Request(Uri.parse(url)).apply {
         setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI or DownloadManager.Request.NETWORK_MOBILE)
-        setDestinationUri(Uri.fromFile(File(downloadDir, fileName)))
+        setDestinationInExternalFilesDir(context, "gpu_drivers", fileName)
         setTitle(fileName)
         setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
     }
@@ -167,7 +167,7 @@ class DriverManagerFragment : Fragment() {
                             Toast.makeText(context, "驱动已安装", Toast.LENGTH_SHORT).show()
                         } else {
                             driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
-                            withContext(Dispatchers.Main) {
+                            GlobalScope.launch(Dispatchers.Main) {
                                 if (_binding != null) {
                                     val adapter = binding.listDrivers.adapter as DriverAdapter
                                     adapter.addItem(driverData.toDriver())
