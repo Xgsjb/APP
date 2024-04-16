@@ -48,7 +48,8 @@ import android.view.WindowManager
 import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import android.content.Intent
-import android.app.Activity
+import android.os.Handler
+import android.os.Looper
 
 class DriverManagerFragment : Fragment() {
     private var _binding: FragmentDriverManagerBinding? = null
@@ -132,6 +133,7 @@ class DriverManagerFragment : Fragment() {
 
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
     val downloadId = dm?.enqueue(request) ?: -1
+    val handler = Handler(Looper.getMainLooper())
 
     // 注册监听器来更新下载进度
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
@@ -160,7 +162,7 @@ class DriverManagerFragment : Fragment() {
                                 // do something if driver is already in the list
                             } else {
                                 driverViewModel.onDriverAdded(Pair(driverZipPath, driverData))
-                                runOnUiThread {
+                                handler.post {
                                     if (_binding != null) {
                                         val adapter = binding.listDrivers.adapter as DriverAdapter
                                         adapter.addItem(driverData.toDriver())
