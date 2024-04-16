@@ -150,26 +150,28 @@ class DriverManagerFragment : Fragment() {
                         // 显示下载完成提示
                         Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
 
-                        // 执行你的操作
-                        val externalStoragePath = Environment.getExternalStorageDirectory().absolutePath
-                        val driverZipPath = "$externalStoragePath/gpu_drivers"
-                        val driverFile = File(driverZipPath)
-
-                        if (driverFile.exists()) {
-                            val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
-                            val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
-                            if (driverInList != null) {
-                                // do something if driver is already in the list
-                            } else {
-                                driverViewModel.onDriverAdded(Pair(driverZipPath, driverData))
-                                handler.post {
-                                    if (_binding != null) {
-                                        val adapter = binding.listDrivers.adapter as DriverAdapter
-                                        adapter.addItem(driverData.toDriver())
-                                        adapter.selectItem(adapter.currentList.indices.last)
-                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                                        binding.listDrivers
-                                            .smoothScrollToPosition(adapter.currentList.indices.last)
+                        // 获取驱动文件并执行操作
+                        val driverDirectory = File(GpuDriverHelper.driverStoragePath)
+                        if (driverDirectory.exists() && driverDirectory.isDirectory) {
+                            val driverFiles = driverDirectory.listFiles()
+                            if (driverFiles.isNotEmpty()) {
+                                // 如果目录不为空，则直接获取第一个文件执行后续操作
+                                val firstDriverFile = driverFiles[0]
+                                val driverData = GpuDriverHelper.getMetadataFromZip(firstDriverFile)
+                                val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
+                                if (driverInList != null) {
+                                    Toast.makeText(context, getString(R.string.driver_already_installed), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    driverViewModel.onDriverAdded(Pair(firstDriverFile.absolutePath, driverData))
+                                    handler.post {
+                                        if (_binding != null) {
+                                            val adapter = binding.listDrivers.adapter as DriverAdapter
+                                            adapter.addItem(driverData.toDriver())
+                                            adapter.selectItem(adapter.currentList.indices.last)
+                                            driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                                            binding.listDrivers
+                                                .smoothScrollToPosition(adapter.currentList.indices.last)
+                                        }
                                     }
                                 }
                             }
@@ -184,6 +186,9 @@ class DriverManagerFragment : Fragment() {
             }
         }
     }, filter)
+
+    return downloadId
+        }
 
     // 定时更新进度条
     val handler = Handler(Looper.getMainLooper())
