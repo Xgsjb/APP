@@ -118,7 +118,7 @@ class DriverManagerFragment : Fragment() {
             getDriver.launch(arrayOf("application/zip"))
         }
 
-        fun downloadAndExecute(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
+        fun downloadFile(context: Context, url: String, fileName: String, progressDialog: ProgressDialog): Long {
     val downloadDir = context.getExternalFilesDir(null)?.let { File(it, "gpu_drivers") }
     downloadDir?.mkdirs()
 
