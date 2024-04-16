@@ -158,7 +158,7 @@ class DriverManagerFragment : Fragment() {
                             if (driverInList != null) {
                                 return@newInstance getString(R.string.driver_already_installed)
                             } else {
-                                driverViewModel.onDriverAdded(Pair(driverPath, driverData))
+                                driverViewModel.onDriverAdded(Pair(driverZipPath, driverData))
                                 withContext(Dispatchers.Main) {
                                     if (_binding != null) {
                                         val adapter = binding.listDrivers.adapter as DriverAdapter
