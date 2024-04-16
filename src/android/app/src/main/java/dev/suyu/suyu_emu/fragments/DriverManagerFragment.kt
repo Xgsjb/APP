@@ -152,14 +152,14 @@ class DriverManagerFragment : Fragment() {
                         val driverZipPath = "$externalStoragePath/gpu_drivers"
                         val driverFile = File(driverZipPath)
 
-                        if(driverFile.exists()) {
+                        if (driverFile.exists()) {
                             val driverData = GpuDriverHelper.getMetadataFromZip(driverFile)
                             val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
                             if (driverInList != null) {
-                                return@newInstance getString(R.string.driver_already_installed)
+                                // do something if driver is already in the list
                             } else {
                                 driverViewModel.onDriverAdded(Pair(driverZipPath, driverData))
-                                withContext(Dispatchers.Main) {
+                                runOnUiThread {
                                     if (_binding != null) {
                                         val adapter = binding.listDrivers.adapter as DriverAdapter
                                         adapter.addItem(driverData.toDriver())
@@ -170,7 +170,6 @@ class DriverManagerFragment : Fragment() {
                                     }
                                 }
                             }
-                            return@newInstance Any()
                         }
                     } else if (status == DownloadManager.STATUS_FAILED) {
                         // 下载失败
@@ -184,7 +183,7 @@ class DriverManagerFragment : Fragment() {
     }, filter)
 
     // 更新进度条
-    val progressFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_CHANGED)
+    val progressFilter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_STATUS_CHANGED)
     context.registerReceiver(object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val query = DownloadManager.Query().setFilterById(downloadId)
