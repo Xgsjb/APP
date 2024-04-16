@@ -57,6 +57,7 @@ class DriverManagerFragment : Fragment() {
 
     private val homeViewModel: HomeViewModel by activityViewModels()
     private val driverViewModel: DriverViewModel by activityViewModels()
+    private val handler = Handler(Looper.getMainLooper())
 
     private val args by navArgs<DriverManagerFragmentArgs>()
 
