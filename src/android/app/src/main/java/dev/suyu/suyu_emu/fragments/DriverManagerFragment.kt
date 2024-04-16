@@ -133,7 +133,6 @@ class DriverManagerFragment : Fragment() {
 
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
     val downloadId = dm?.enqueue(request) ?: -1
-    val handler = Handler(Looper.getMainLooper())
 
     // 注册监听器来更新下载进度
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
