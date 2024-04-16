@@ -154,7 +154,31 @@ class DriverManagerFragment : Fragment() {
                         val downloadedFile = File(downloadDir, fileName)
 
                         // 执行操作
-                        processDownloadedFile(context, downloadedFile)
+                        if (downloadedFile.exists() && downloadedFile.isFile) {
+                            val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
+                            val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
+                            if (driverInList != null) {
+                                // 如果驱动程序已经在列表中，则执行相应操作（可以留空）
+                            } else {
+                                // 如果驱动程序不在列表中，则添加到列表并更新界面
+                                driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
+                                handler.post {
+                                    if (_binding != null) {
+                                        val adapter = binding.listDrivers.adapter as DriverAdapter
+                                        adapter.addItem(driverData.toDriver())
+                                        adapter.selectItem(adapter.currentList.indices.last)
+                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                                        binding.listDrivers
+                                            .smoothScrollToPosition(adapter.currentList.indices.last)
+                                    }
+                                }
+                            }
+                            // Show a message indicating processing completion
+                            Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // 如果没有找到驱动程序压缩文件，则显示相应的消息
+                            Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
+                        }
                     } else if (status == DownloadManager.STATUS_FAILED) {
                         // 下载失败
                         progressDialog.dismiss()
@@ -167,36 +191,7 @@ class DriverManagerFragment : Fragment() {
     }, filter)
 
     return downloadId
-}
-
-fun processDownloadedFile(context: Context, downloadedFile: File) {
-    if (downloadedFile.exists() && downloadedFile.isFile) {
-        // 执行你的操作
-        val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
-        val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
-        if (driverInList != null) {
-            // 如果驱动程序已经在列表中，则执行相应操作（可以留空）
-        } else {
-            // 如果驱动程序不在列表中，则添加到列表并更新界面
-            driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
-            handler.post {
-                if (_binding != null) {
-                    val adapter = binding.listDrivers.adapter as DriverAdapter
-                    adapter.addItem(driverData.toDriver())
-                    adapter.selectItem(adapter.currentList.indices.last)
-                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                    binding.listDrivers
-                        .smoothScrollToPosition(adapter.currentList.indices.last)
-                }
-            }
         }
-        // Show a message indicating processing completion
-        Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
-    } else {
-        // 如果没有找到驱动程序压缩文件，则显示相应的消息
-        Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
-    }
-}
 
         binding.buttonDownload.setOnClickListener {
     // 加载自定义布局
