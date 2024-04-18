@@ -138,7 +138,7 @@ class DriverManagerFragment : Fragment() {
 
     // 注册监听器来更新下载进度
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-    val receiver = object : BroadcastReceiver() {
+    context.registerReceiver(object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val query = DownloadManager.Query().setFilterById(downloadId)
             val cursor = dm?.query(query)
@@ -185,12 +185,36 @@ class DriverManagerFragment : Fragment() {
                     }
                 }
             }
-            // 解除广播接收器
-            context?.unregisterReceiver(this)
         }
-    }
-    context.registerReceiver(receiver, filter)
+    }, filter)
+    
+    // 添加定时器以更新进度条
+    val timer = Timer()
+    timer.scheduleAtFixedRate(object : TimerTask() {
+        override fun run() {
+            val query = DownloadManager.Query().setFilterById(downloadId)
+            val cursor = dm?.query(query)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val bytesDownloaded = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val bytesTotal = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    val progress = (bytesDownloaded.toFloat() / bytesTotal.toFloat() * 100).toInt()
+                    
+                    // 更新进度条
+                    progressDialog.progress = progress
+                }
+            }
+        }
+    }, 0, 1000) // 每秒更新一次
 
+    // 添加取消按钮
+    progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消") { dialog, _ ->
+        // 用户点击取消按钮时取消下载
+        dm?.remove(downloadId)
+        dialog.dismiss()
+    }
+
+    // 返回下载任务的ID
     return downloadId
         }
 
