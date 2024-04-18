@@ -144,7 +144,6 @@ class DriverManagerFragment : Fragment() {
         val notificationBuilder = NotificationCompat.Builder(context, "download_channel_id")
             .setContentTitle("文件下载")
             .setContentText("正在下载：$fileName")
-            .setSmallIcon(R.drawable.ic_download)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setProgress(0, 0, true)
             .setOngoing(true) // 设置通知为持久性，直到下载完成或取消
