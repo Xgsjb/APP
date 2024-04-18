@@ -58,6 +58,7 @@ class DriverManagerFragment : Fragment() {
     private val homeViewModel: HomeViewModel by activityViewModels()
     private val driverViewModel: DriverViewModel by activityViewModels()
     private val handler = Handler(Looper.getMainLooper())
+    private var lastProgress = 0
 
     private val args by navArgs<DriverManagerFragmentArgs>()
 
@@ -137,7 +138,7 @@ class DriverManagerFragment : Fragment() {
 
     // 注册监听器来更新下载进度
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-    context.registerReceiver(object : BroadcastReceiver() {
+    val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val query = DownloadManager.Query().setFilterById(downloadId)
             val cursor = dm?.query(query)
@@ -156,33 +157,20 @@ class DriverManagerFragment : Fragment() {
                         // 执行操作
                         if (downloadedFile.exists() && downloadedFile.isFile) {
                             val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
-                            val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
-                            if (driverInList != null) {
-                                // 如果驱动程序已经在列表中，更新界面
-                                handler.post {
-                                    if (_binding != null) {
-                                        val adapter = binding.listDrivers.adapter as DriverAdapter
-                                        adapter.addItem(driverData.toDriver())
-                                        adapter.selectItem(adapter.currentList.indexOfFirst { it.second == driverData })
-                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                                        binding.listDrivers
-                                            .smoothScrollToPosition(adapter.currentList.indexOfFirst { it.second == driverData })
-                                    }
-                                }
-                            } else {
-                                // 如果驱动程序不在列表中，则添加到列表并更新界面
-                                driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
-                                handler.post {
-                                    if (_binding != null) {
-                                        val adapter = binding.listDrivers.adapter as DriverAdapter
-                                        adapter.addItem(driverData.toDriver())
-                                        adapter.selectItem(adapter.currentList.indices.last)
-                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                                        binding.listDrivers
-                                            .smoothScrollToPosition(adapter.currentList.indices.last)
-                                    }
+                            
+                            // 添加到列表并更新界面
+                            driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
+                            handler.post {
+                                if (_binding != null) {
+                                    val adapter = binding.listDrivers.adapter as DriverAdapter
+                                    adapter.addItem(driverData.toDriver())
+                                    adapter.selectItem(adapter.currentList.indices.last)
+                                    driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                                    binding.listDrivers
+                                        .smoothScrollToPosition(adapter.currentList.indices.last)
                                 }
                             }
+                            
                             // Show a message indicating processing completion
                             Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
                         } else {
@@ -197,36 +185,11 @@ class DriverManagerFragment : Fragment() {
                     }
                 }
             }
+            // 解除广播接收器
+            context?.unregisterReceiver(this)
         }
-    }, filter)
-
-    // 添加定时更新进度条的任务
-    val timer = Timer()
-    timer.schedule(object : TimerTask() {
-        override fun run() {
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = dm?.query(query)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val downloaded = it.getLong(it.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
-                    val total = it.getLong(it.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
-                    val progress = (downloaded * 100L / total).toInt()
-                    // 更新进度条
-                    progressDialog.progress = progress
-                }
-            }
-        }
-    }, 0, 1000) // 每秒钟更新一次
-
-    // 在取消按钮的点击事件中添加取消下载请求的逻辑
-    progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消") { _, _ ->
-        // 取消下载请求
-        dm?.remove(downloadId)
-        // 关闭进度对话框
-        progressDialog.dismiss()
-        // 取消定时任务
-        timer.cancel()
     }
+    context.registerReceiver(receiver, filter)
 
     return downloadId
         }
