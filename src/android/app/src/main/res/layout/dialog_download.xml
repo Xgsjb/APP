@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
     android:padding="16dp">
 
     <TextView
         android:id="@+id/text_title1"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Turnip-24.1.0.adpkg_R18"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/text_download1"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/text_download1"
@@ -19,15 +21,20 @@
         android:layout_height="wrap_content"
         android:text="下载"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/text_title1" />
 
     <TextView
         android:id="@+id/text_title2"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Turnip-24.1.0.adpkg_R17"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/text_download2"
+        app:layout_constraintTop_toBottomOf="@id/text_title1" />
 
     <Button
         android:id="@+id/text_download2"
@@ -35,15 +42,20 @@
         android:layout_height="wrap_content"
         android:text="下载"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/text_title2" />
 
     <TextView
         android:id="@+id/text_title3"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Turnip-24.1.0.adpkg_R16"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/text_download3"
+        app:layout_constraintTop_toBottomOf="@id/text_title2" />
 
     <Button
         android:id="@+id/text_download3"
@@ -51,6 +63,8 @@
         android:layout_height="wrap_content"
         android:text="下载"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/text_title3" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
