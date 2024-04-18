@@ -136,31 +136,28 @@ class DriverManagerFragment : Fragment() {
     val downloadId = dm?.enqueue(request) ?: -1
 
     // 注册监听器来更新下载进度
-    val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+    val filter = IntentFilter().apply {
+        addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        addAction(DownloadManager.ACTION_NOTIFICATION_CLICKED)
+    }
+
     context.registerReceiver(object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = dm?.query(query)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val status = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_STATUS))
-                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                        // 下载成功
-                        progressDialog.dismiss()
-                        // 显示下载完成提示
-                        Toast.makeText(context, "下载完成", Toast.LENGTH_SHORT).show()
-
-                        // 获取下载的文件
-                        val downloadedFile = File(downloadDir, fileName)
-
-                        // 执行操作
-                        if (downloadedFile.exists() && downloadedFile.isFile) {
-                            val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
-                            val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
-                            if (driverInList != null) {
-                                // 如果驱动程序已经在列表中，则执行相应操作（可以留空）
-                            } else {
-                                // 如果驱动程序不在列表中，则添加到列表并更新界面
+        override fun onReceive(context: Context, intent: Intent) {
+            val action = intent.action
+            if (action == DownloadManager.ACTION_DOWNLOAD_COMPLETE) {
+                val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = dm?.query(query)
+                cursor?.use {
+                    if (it.moveToFirst()) {
+                        val status = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            // 下载成功
+                            progressDialog.dismiss()
+                            // 处理下载完成的逻辑...
+                            val downloadedFile = File(downloadDir, fileName)
+                            if (downloadedFile.exists() && downloadedFile.isFile) {
+                                val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
                                 driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
                                 handler.post {
                                     if (_binding != null) {
@@ -172,18 +169,16 @@ class DriverManagerFragment : Fragment() {
                                             .smoothScrollToPosition(adapter.currentList.indices.last)
                                     }
                                 }
+                                Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
                             }
-                            // Show a message indicating processing completion
-                            Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // 如果没有找到驱动程序压缩文件，则显示相应的消息
-                            Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
+                        } else if (status == DownloadManager.STATUS_FAILED) {
+                            // 下载失败
+                            progressDialog.dismiss()
+                            // 处理下载失败的逻辑...
+                            Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
                         }
-                    } else if (status == DownloadManager.STATUS_FAILED) {
-                        // 下载失败
-                        progressDialog.dismiss()
-                        // 显示下载失败提示
-                        Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
