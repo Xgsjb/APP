@@ -137,7 +137,7 @@ class DriverManagerFragment : Fragment() {
 
     // 注册监听器来更新下载进度
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-    context.registerReceiver(object : BroadcastReceiver() {
+    val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val query = DownloadManager.Query().setFilterById(downloadId)
             val cursor = dm?.query(query)
@@ -156,22 +156,14 @@ class DriverManagerFragment : Fragment() {
                         // 执行操作
                         if (downloadedFile.exists() && downloadedFile.isFile) {
                             val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
-                            val driverInList = driverViewModel.driverData.firstOrNull { it.second == driverData }
-                            if (driverInList != null) {
-                                // 如果驱动程序已经在列表中，则执行相应操作（可以留空）
-                            } else {
-                                // 如果驱动程序不在列表中，则添加到列表并更新界面
-                                driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
-                                handler.post {
-                                    if (_binding != null) {
-                                        val adapter = binding.listDrivers.adapter as DriverAdapter
-                                        adapter.addItem(driverData.toDriver())
-                                        adapter.selectItem(adapter.currentList.indices.last)
-                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                                        binding.listDrivers
-                                            .smoothScrollToPosition(adapter.currentList.indices.last)
-                                    }
-                                }
+                            val adapter = _binding?.listDrivers?.adapter as? DriverAdapter
+                            adapter?.apply {
+                                addItem(driverData.toDriver())
+                                selectItem(currentList.indices.last)
+                            }
+                            driverViewModel?.let { viewModel ->
+                                viewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
+                                viewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
                             }
                             // Show a message indicating processing completion
                             Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
@@ -188,7 +180,25 @@ class DriverManagerFragment : Fragment() {
                 }
             }
         }
-    }, filter)
+    }
+    context.registerReceiver(receiver, filter)
+
+    // 定时更新进度条
+    val timer = Timer()
+    timer.scheduleAtFixedRate(object : TimerTask() {
+        override fun run() {
+            val query = DownloadManager.Query().setFilterById(downloadId)
+            val cursor = dm?.query(query)
+            cursor?.use {
+                if (it.moveToFirst()) {
+                    val bytesDownloaded = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR))
+                    val bytesTotal = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    val progress = (bytesDownloaded.toFloat() / bytesTotal.toFloat() * 100).toInt()
+                    progressDialog.progress = progress
+                }
+            }
+        }
+    }, 0, 1000) // 每秒钟更新一次
 
     return downloadId
         }
