@@ -135,7 +135,6 @@ class DriverManagerFragment : Fragment() {
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
     val downloadId = dm?.enqueue(request) ?: -1
 
-    // 注册监听器来更新下载进度
     val filter = IntentFilter().apply {
         addAction(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
         addAction(DownloadManager.ACTION_NOTIFICATION_CLICKED)
@@ -152,9 +151,7 @@ class DriverManagerFragment : Fragment() {
                     if (it.moveToFirst()) {
                         val status = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_STATUS))
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                            // 下载成功
                             progressDialog.dismiss()
-                            // 处理下载完成的逻辑...
                             val downloadedFile = File(downloadDir, fileName)
                             if (downloadedFile.exists() && downloadedFile.isFile) {
                                 val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
