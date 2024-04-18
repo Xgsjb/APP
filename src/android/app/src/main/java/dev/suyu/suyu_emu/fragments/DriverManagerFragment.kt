@@ -207,7 +207,42 @@ class DriverManagerFragment : Fragment() {
     return downloadId
         }
 
-        
+        binding.buttonDownload.setOnClickListener {
+    // 加载自定义布局
+    val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_download, null)
+
+    // 获取布局中的文本视图
+    val textTitle1 = dialogView.findViewById<TextView>(R.id.text_title1)
+    val textDownload1 = dialogView.findViewById<TextView>(R.id.text_download1)
+    val textTitle2 = dialogView.findViewById<TextView>(R.id.text_title2)
+    val textDownload2 = dialogView.findViewById<TextView>(R.id.text_download2)
+    val textTitle3 = dialogView.findViewById<TextView>(R.id.text_title3)
+    val textDownload3 = dialogView.findViewById<TextView>(R.id.text_download3)
+
+    // 设置标题文本
+    textTitle1.text = "Turnip-24.1.0.adpkg_R18"
+    textTitle2.text = "Turnip-24.1.0.adpkg_R17"
+    textTitle3.text = "Turnip-24.1.0.adpkg_R16"
+
+    // 设置下载文本
+    textDownload1.setOnClickListener {
+        val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R18/Turnip-24.1.0.adpkg_R18.zip"
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R18.zip", null)
+    }
+    textDownload2.setOnClickListener {
+        val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R17/turnip-24.1.0.adpkg_R17-v2.zip"
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R17.zip", null)
+    }
+    textDownload3.setOnClickListener {
+        val url = "https://github.com/K11MCH1/AdrenoToolsDrivers/releases/download/v24.1.0_R16/Turnip-24.1.0.adpkg_R16.zip"
+        val downloadId = downloadFile(requireContext(), url, "Turnip-24.1.0.adpkg_R16.zip", null)
+    }
+    // 创建并显示对话框
+    val dialogBuilder = AlertDialog.Builder(requireContext())
+    dialogBuilder.setView(dialogView)
+    val dialog = dialogBuilder.create()
+    dialog.show()
+        }
 
         binding.listDrivers.apply {
             layoutManager = GridLayoutManager(
