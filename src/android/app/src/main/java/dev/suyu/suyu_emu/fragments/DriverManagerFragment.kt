@@ -138,71 +138,74 @@ class DriverManagerFragment : Fragment() {
     val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
     val downloadId = dm?.enqueue(request) ?: -1
 
-    // 创建自定义通知
-    val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-    val notificationBuilder = NotificationCompat.Builder(context, "download_channel_id")
-        .setContentTitle("文件下载")
-        .setContentText("正在下载：$fileName")
-        .setSmallIcon(R.drawable.ic_download)
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setProgress(0, 0, true)
-        .setOngoing(true) // 设置通知为持久性，直到下载完成或取消
+    downloadId.takeIf { it != -1L }?.let { id ->
+        // 创建自定义通知
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        val notificationBuilder = NotificationCompat.Builder(context, "download_channel_id")
+            .setContentTitle("文件下载")
+            .setContentText("正在下载：$fileName")
+            .setSmallIcon(R.drawable.ic_download)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setProgress(0, 0, true)
+            .setOngoing(true) // 设置通知为持久性，直到下载完成或取消
 
-    // 显示通知
-    notificationManager?.notify(downloadId.toInt(), notificationBuilder.build())
+        // 显示通知
+        notificationManager?.notify(id.toInt(), notificationBuilder.build())
 
-    // 注册广播接收器来处理下载完成事件
-    val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-    context.registerReceiver(object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            // 检查下载完成的ID是否匹配当前下载的ID
-            if (intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == downloadId) {
-                // 取消通知
-                notificationManager?.cancel(downloadId.toInt())
+        // 注册广播接收器来处理下载完成事件
+        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
+        context.registerReceiver(object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                context ?: return
+                // 检查下载完成的ID是否匹配当前下载的ID
+                if (intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == downloadId) {
+                    // 取消通知
+                    notificationManager?.cancel(id.toInt())
 
-                // 获取下载状态
-                val query = DownloadManager.Query().setFilterById(downloadId)
-                val cursor = dm?.query(query)
-                cursor?.use {
-                    if (it.moveToFirst()) {
-                        val status = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_STATUS))
-                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
-                            // 获取下载的文件
-                            val downloadedFile = File(downloadDir, fileName)
+                    // 获取下载状态
+                    val query = DownloadManager.Query().setFilterById(downloadId)
+                    val cursor = dm?.query(query)
+                    cursor?.use {
+                        if (it.moveToFirst()) {
+                            val status = it.getInt(it.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                            if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                                // 获取下载的文件
+                                val downloadedFile = File(downloadDir, fileName)
 
-                            // 执行操作
-                            if (downloadedFile.exists() && downloadedFile.isFile) {
-                                val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
+                                // 执行操作
+                                if (downloadedFile.exists() && downloadedFile.isFile) {
+                                    val driverData = GpuDriverHelper.getMetadataFromZip(downloadedFile)
 
-                                // 添加到列表并更新界面
-                                driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
-                                handler.post {
-                                    if (_binding != null) {
-                                        val adapter = binding.listDrivers.adapter as DriverAdapter
-                                        adapter.addItem(driverData.toDriver())
-                                        adapter.selectItem(adapter.currentList.indices.last)
-                                        driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
-                                        binding.listDrivers
-                                            .smoothScrollToPosition(adapter.currentList.indices.last)
+                                    // 添加到列表并更新界面
+                                    driverViewModel.onDriverAdded(Pair(downloadedFile.absolutePath, driverData))
+                                    handler.post {
+                                        if (_binding != null) {
+                                            val adapter = binding.listDrivers.adapter as DriverAdapter
+                                            adapter.addItem(driverData.toDriver())
+                                            adapter.selectItem(adapter.currentList.indices.last)
+                                            driverViewModel.showClearButton(!StringSetting.DRIVER_PATH.global)
+                                            binding.listDrivers
+                                                .smoothScrollToPosition(adapter.currentList.indices.last)
+                                        }
                                     }
-                                }
 
-                                // 显示处理完成的消息
-                                Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
-                            } else {
-                                // 如果没有找到驱动程序压缩文件，则显示相应的消息
-                                Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
+                                    // 显示处理完成的消息
+                                    Toast.makeText(context, "GPU驱动程序处理完成", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    // 如果没有找到驱动程序压缩文件，则显示相应的消息
+                                    Toast.makeText(context, "未找到GPU驱动程序", Toast.LENGTH_SHORT).show()
+                                }
+                            } else if (status == DownloadManager.STATUS_FAILED) {
+                                // 下载失败
+                                // 显示下载失败提示
+                                Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
                             }
-                        } else if (status == DownloadManager.STATUS_FAILED) {
-                            // 下载失败
-                            // 显示下载失败提示
-                            Toast.makeText(context, "下载失败", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
             }
-        }
-    }, filter)
+        }, filter)
+    }
 
     return downloadId
         }
