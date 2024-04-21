@@ -18,10 +18,7 @@ class FirmwareManager(private val context: Context) {
     fun checkAndDownloadFirmware() {
         val registeredDirectory = File(registeredDirectoryPath)
 
-        if (!firmwareFile.exists() || 
-            !registeredDirectory.exists() || 
-            registeredDirectory.listFiles()?.isNotEmpty() == false
-        ) {
+        if (!firmwareFile.exists() || !registeredDirectory.exists() || registeredDirectory.listFiles()?.isNotEmpty() != true) {
             Log.d(TAG, "Firmware files are missing. Showing download dialog...")
             showDownloadDialog()
         } else {
