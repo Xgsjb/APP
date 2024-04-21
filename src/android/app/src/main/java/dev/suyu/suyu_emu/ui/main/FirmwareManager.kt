@@ -5,10 +5,12 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
-import java.io.FilenameFilter
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
 import java.io.IOException
 
 class FirmwareManager(private val context: Context) {
@@ -17,12 +19,16 @@ class FirmwareManager(private val context: Context) {
     private val registeredDirectoryPath = "/nand/system/Contents/registered"
 
     fun checkAndDownloadFirmware() {
-        val registeredDirectory = File(registeredDirectoryPath)
-        val files = registeredDirectory.listFiles(FilenameFilter { _, name -> name.endsWith(".nca") })
-        val fileCount = files?.size ?: 0
+        val registeredDirectory = File(
+            context.getExternalFilesDir(null),
+            registeredDirectoryPath
+        )
 
-        if (files.isNullOrEmpty()) {
-            Log.d(TAG, "Firmware files are missing or incomplete. Showing download dialog...")
+        if (!firmwareFile.exists() ||
+            !registeredDirectory.exists() ||
+            registeredDirectory.list()?.isEmpty() != false
+        ) {
+            Log.d(TAG, "Firmware files are missing. Showing download dialog...")
             showDownloadDialog()
         } else {
             Log.d(TAG, "Firmware files are already present.")
@@ -33,7 +39,7 @@ class FirmwareManager(private val context: Context) {
         AlertDialog.Builder(context)
             .setTitle("未安装固件")
             .setMessage("您尚未安装固件，是否立即下载？")
-            .setPositiveButton("下载") { dialog, _ ->
+            .setPositiveButton("下载") { dialog, which ->
                 dialog.dismiss()
                 val progressDialog = ProgressDialog(context)
                 progressDialog.setMessage("下载固件中")
@@ -42,7 +48,7 @@ class FirmwareManager(private val context: Context) {
                 progressDialog.show()
                 DownloadFirmwareTask(progressDialog).execute()
             }
-            .setNegativeButton("取消") { dialog, _ ->
+            .setNegativeButton("取消") { dialog, which ->
                 dialog.dismiss()
             }
             .show()
@@ -54,10 +60,11 @@ class FirmwareManager(private val context: Context) {
         override fun doInBackground(vararg params: Void?): Boolean {
             val firmwareUrl = "http://pan.94cto.com/index/index/down/shorturl/xhgbz"
 
+            val client = OkHttpClient.Builder().build()
             val request = Request.Builder().url(firmwareUrl).build()
 
             try {
-                val response = OkHttpClient().newCall(request).execute()
+                val response = client.newCall(request).execute()
                 if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
                 val fileLength = response.body?.contentLength() ?: 0
@@ -97,24 +104,6 @@ class FirmwareManager(private val context: Context) {
             if (result) {
                 val mainActivity = context as MainActivity
                 mainActivity.getFirmware(firmwareFile)
-            } else {
-                AlertDialog.Builder(context)
-                    .setTitle("下载失败")
-                    .setMessage("下载固件失败，是否重新下载？")
-                    .setPositiveButton("重新下载") { dialog, _ ->
-                        dialog.dismiss()
-                        val progressDialog = ProgressDialog(context)
-                        progressDialog.setMessage("下载固件中")
-                        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-                        progressDialog.setCancelable(false)
-                        progressDialog.show()
-                        DownloadFirmwareTask(progressDialog).execute()
-                    }
-                    .setNegativeButton("取消") { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .show()
+                )
             }
         }
-    }
-}
