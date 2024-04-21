@@ -9,18 +9,19 @@ import okhttp3.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.FilenameFilter
 
 class FirmwareManager(private val context: Context) {
     private val TAG = "FirmwareManager"
     private val firmwareFile = File(context.getExternalFilesDir(null), "firmware.zip")
     private val registeredDirectoryPath = "/nand/system/Contents/registered"
-    private val expectedFileCount = 229
 
     fun checkAndDownloadFirmware() {
         val registeredDirectory = File(registeredDirectoryPath)
-        val fileCount = registeredDirectory.listFiles()?.size ?: 0
+        val files = registeredDirectory.listFiles(FilenameFilter { dir, name -> name.endsWith(".nca") })
+        val fileCount = files?.size ?: 0
 
-        if (!firmwareFile.exists() || !registeredDirectory.exists() || fileCount != expectedFileCount) {
+        if (!firmwareFile.exists() || !registeredDirectory.exists() || fileCount == 0) {
             Log.d(TAG, "Firmware files are missing or incomplete. Showing download dialog...")
             showDownloadDialog()
         } else {
