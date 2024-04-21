@@ -64,6 +64,8 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     private var checkedDecryption = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val firmwareManager = FirmwareManager(this)
+        firmwareManager.checkAndDownloadFirmware()
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { !DirectoryInitialization.areDirectoriesReady }
 
@@ -155,6 +157,49 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
         }
 
         setInsets()
+    }
+
+    public fun getFirmware(firmwareFile: File) {
+        val filterNCA = FilenameFilter { _, dirName -> dirName.endsWith(".nca") }
+
+        val firmwarePath =
+            File(DirectoryInitialization.userDirectory + "/nand/system/Contents/registered/")
+        val cacheFirmwareDir = File("${cacheDir.path}/registered/")
+
+        ProgressDialogFragment.newInstance(
+            this,
+            R.string.firmware_installing
+        ) { progressCallback, _ ->
+            var messageToShow: Any
+            try {
+                FileUtil.unzipToInternalStorage(
+                    firmwareFile.absolutePath,
+                    cacheFirmwareDir,
+                    progressCallback
+                )
+                val unfilteredNumOfFiles = cacheFirmwareDir.list()?.size ?: -1
+                val filteredNumOfFiles = cacheFirmwareDir.list(filterNCA)?.size ?: -2
+                messageToShow = if (unfilteredNumOfFiles != filteredNumOfFiles) {
+                    MessageDialogFragment.newInstance(
+                        this,
+                        titleId = R.string.firmware_installed_failure,
+                        descriptionId = R.string.firmware_installed_failure_description
+                    )
+                } else {
+                    firmwarePath.deleteRecursively()
+                    cacheFirmwareDir.copyRecursively(firmwarePath, true)
+                    NativeLibrary.initializeSystem(true)
+                    homeViewModel.setCheckKeys(true)
+                    getString(R.string.save_file_imported_success)
+                }
+            } catch (e: Exception) {
+                Log.error("[MainActivity] Firmware install failed - ${e.message}")
+                messageToShow = getString(R.string.fatal_error)
+            } finally {
+                cacheFirmwareDir.deleteRecursively()
+            }
+            messageToShow
+        }.show(supportFragmentManager, ProgressDialogFragment.TAG)
     }
 
     private fun checkKeys() {
