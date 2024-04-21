@@ -138,7 +138,7 @@ class DriverManagerFragment : Fragment() {
 
     // 注册监听器来更新下载进度
     val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-    context.registerReceiver(object : BroadcastReceiver() {
+    val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val query = DownloadManager.Query().setFilterById(downloadId)
             val cursor = dm?.query(query)
@@ -185,8 +185,11 @@ class DriverManagerFragment : Fragment() {
                     }
                 }
             }
+            // 注销广播接收器
+            context?.unregisterReceiver(this)
         }
-    }, filter)
+    }
+    context.registerReceiver(receiver, filter)
     
     // 定义定时器以定期查询下载进度
     val timer = Timer()
