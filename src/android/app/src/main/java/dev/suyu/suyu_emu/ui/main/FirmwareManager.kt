@@ -8,8 +8,8 @@ import android.util.Log
 import okhttp3.*
 import java.io.File
 import java.io.FileOutputStream
-import java.io.IOException
 import java.io.FilenameFilter
+import java.io.IOException
 
 class FirmwareManager(private val context: Context) {
     private val TAG = "FirmwareManager"
@@ -18,10 +18,10 @@ class FirmwareManager(private val context: Context) {
 
     fun checkAndDownloadFirmware() {
         val registeredDirectory = File(registeredDirectoryPath)
-        val files = registeredDirectory.listFiles(FilenameFilter { dir, name -> name.endsWith(".nca") })
+        val files = registeredDirectory.listFiles(FilenameFilter { _, name -> name.endsWith(".nca") })
         val fileCount = files?.size ?: 0
 
-        if (!firmwareFile.exists() || !registeredDirectory.exists() || fileCount == 0) {
+        if (files.isNullOrEmpty()) {
             Log.d(TAG, "Firmware files are missing or incomplete. Showing download dialog...")
             showDownloadDialog()
         } else {
@@ -33,7 +33,7 @@ class FirmwareManager(private val context: Context) {
         AlertDialog.Builder(context)
             .setTitle("未安装固件")
             .setMessage("您尚未安装固件，是否立即下载？")
-            .setPositiveButton("下载") { dialog, which ->
+            .setPositiveButton("下载") { dialog, _ ->
                 dialog.dismiss()
                 val progressDialog = ProgressDialog(context)
                 progressDialog.setMessage("下载固件中")
@@ -42,7 +42,7 @@ class FirmwareManager(private val context: Context) {
                 progressDialog.show()
                 DownloadFirmwareTask(progressDialog).execute()
             }
-            .setNegativeButton("取消") { dialog, which ->
+            .setNegativeButton("取消") { dialog, _ ->
                 dialog.dismiss()
             }
             .show()
@@ -101,7 +101,7 @@ class FirmwareManager(private val context: Context) {
                 AlertDialog.Builder(context)
                     .setTitle("下载失败")
                     .setMessage("下载固件失败，是否重新下载？")
-                    .setPositiveButton("重新下载") { dialog, which ->
+                    .setPositiveButton("重新下载") { dialog, _ ->
                         dialog.dismiss()
                         val progressDialog = ProgressDialog(context)
                         progressDialog.setMessage("下载固件中")
@@ -110,7 +110,7 @@ class FirmwareManager(private val context: Context) {
                         progressDialog.show()
                         DownloadFirmwareTask(progressDialog).execute()
                     }
-                    .setNegativeButton("取消") { dialog, which ->
+                    .setNegativeButton("取消") { dialog, _ ->
                         dialog.dismiss()
                     }
                     .show()
