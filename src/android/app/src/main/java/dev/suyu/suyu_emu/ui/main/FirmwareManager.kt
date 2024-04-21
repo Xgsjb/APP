@@ -14,12 +14,14 @@ class FirmwareManager(private val context: Context) {
     private val TAG = "FirmwareManager"
     private val firmwareFile = File(context.getExternalFilesDir(null), "firmware.zip")
     private val registeredDirectoryPath = "/nand/system/Contents/registered"
+    private val expectedFileCount = 229
 
     fun checkAndDownloadFirmware() {
         val registeredDirectory = File(registeredDirectoryPath)
+        val fileCount = registeredDirectory.listFiles()?.size ?: 0
 
-        if (!firmwareFile.exists() || !registeredDirectory.exists() || registeredDirectory.listFiles()?.isNotEmpty() != true) {
-            Log.d(TAG, "Firmware files are missing. Showing download dialog...")
+        if (!firmwareFile.exists() || !registeredDirectory.exists() || fileCount != expectedFileCount) {
+            Log.d(TAG, "Firmware files are missing or incomplete. Showing download dialog...")
             showDownloadDialog()
         } else {
             Log.d(TAG, "Firmware files are already present.")
