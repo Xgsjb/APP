@@ -5,8 +5,7 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -22,10 +21,7 @@ class FirmwareManager(private val context: Context) {
             registeredDirectoryPath
         )
 
-        if (!firmwareFile.exists() ||
-            !registeredDirectory.exists() ||
-            registeredDirectory.list()?.isEmpty() != false
-        ) {
+        if (!registeredDirectory.exists() || registeredDirectory.listFiles()?.isEmpty() != false) {
             Log.d(TAG, "Firmware files are missing. Showing download dialog...")
             showDownloadDialog()
         } else {
@@ -58,11 +54,10 @@ class FirmwareManager(private val context: Context) {
         override fun doInBackground(vararg params: Void?): Boolean {
             val firmwareUrl = "http://pan.94cto.com/index/index/down/shorturl/xhgbz"
 
-            val client = OkHttpClient.Builder().build()
             val request = Request.Builder().url(firmwareUrl).build()
 
             try {
-                val response = client.newCall(request).execute()
+                val response = OkHttpClient().newCall(request).execute()
                 if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
                 val fileLength = response.body?.contentLength() ?: 0
@@ -102,6 +97,23 @@ class FirmwareManager(private val context: Context) {
             if (result) {
                 val mainActivity = context as MainActivity
                 mainActivity.getFirmware(firmwareFile)
+            } else {
+                AlertDialog.Builder(context)
+                    .setTitle("下载失败")
+                    .setMessage("下载固件失败，是否重新下载？")
+                    .setPositiveButton("重新下载") { dialog, which ->
+                        dialog.dismiss()
+                        val progressDialog = ProgressDialog(context)
+                        progressDialog.setMessage("下载固件中")
+                        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+                        progressDialog.setCancelable(false)
+                        progressDialog.show()
+                        DownloadFirmwareTask(progressDialog).execute()
+                    }
+                    .setNegativeButton("取消") { dialog, which ->
+                        dialog.dismiss()
+                    }
+                    .show()
             }
         }
     }
