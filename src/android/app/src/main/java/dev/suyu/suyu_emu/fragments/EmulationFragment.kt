@@ -70,6 +70,7 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private var emulationActivity: EmulationActivity? = null
     private var perfStatsUpdater: (() -> Unit)? = null
     private var thermalStatsUpdater: (() -> Unit)? = null
+    private var batteryReceiverRegistered: Boolean = false
 
     private var _binding: FragmentEmulationBinding? = null
     private val binding get() = _binding!!
