@@ -1,4 +1,4 @@
-package org.suyu.suyu_emu.fragments
+package dev.suyu.suyu_emu.fragments
 
 import android.content.Context
 import android.content.Intent
