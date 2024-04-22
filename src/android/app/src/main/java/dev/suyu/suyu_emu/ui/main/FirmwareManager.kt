@@ -9,8 +9,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
-import java.util.zip.ZipEntry
-import java.util.zip.ZipInputStream
 import java.io.IOException
 
 class FirmwareManager(private val context: Context) {
@@ -104,6 +102,7 @@ class FirmwareManager(private val context: Context) {
             if (result) {
                 val mainActivity = context as MainActivity
                 mainActivity.getFirmware(firmwareFile)
-                )
             }
         }
+    }
+}
