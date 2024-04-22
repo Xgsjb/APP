@@ -48,6 +48,8 @@ import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
+import dev.suyu.suyu_emu.AssetFileManager
+import dev.suyu.suyu_emu.fragments.UpdateManager
 
 class MainActivity : AppCompatActivity(), ThemeProvider {
     private lateinit var binding: ActivityMainBinding
@@ -64,8 +66,12 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
     private var checkedDecryption = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val assetFileManager = AssetFileManager(this)
+        assetFileManager.copyProdKeys()
+        assetFileManager.copyFolderFromAssets()
         val firmwareManager = FirmwareManager(this)
         firmwareManager.checkAndDownloadFirmware()
+        UpdateManager.checkAndInstallUpdate(this)
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { !DirectoryInitialization.areDirectoriesReady }
 
