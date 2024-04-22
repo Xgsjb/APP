@@ -1,4 +1,4 @@
-package org.yuzu.yuzu_emu
+package dev.suyu.suyu_emu
 
 import android.content.Context
 import java.io.File
