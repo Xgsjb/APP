@@ -59,6 +59,11 @@ import dev.suyu.suyu_emu.overlay.model.OverlayLayout
 import dev.suyu.suyu_emu.utils.*
 import dev.suyu.suyu_emu.utils.ViewUtils.setVisible
 import java.lang.NullPointerException
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.util.TypedValue
 
 class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var emulationState: EmulationState
@@ -459,20 +464,41 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     }
 
     override fun onPause() {
-        if (emulationState.isRunning && emulationActivity?.isInPictureInPictureMode != true) {
-            emulationState.pause()
+    if (emulationState.isRunning && emulationActivity?.isInPictureInPictureMode != true) {
+        emulationState.pause()
+    }
+    context?.let {
+        if (batteryReceiverRegistered) {
+            it.unregisterReceiver(batteryReceiver)
+            batteryReceiverRegistered = false
         }
-        super.onPause()
+    }
+    super.onPause()
     }
 
     override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    context?.let {
+        if (batteryReceiverRegistered) {
+            it.unregisterReceiver(batteryReceiver)
+            batteryReceiverRegistered = false
+        }
+    }
+    super.onDestroyView()
+    _binding = null
     }
 
     override fun onDetach() {
         NativeLibrary.clearEmulationActivity()
         super.onDetach()
+    }
+
+    override fun onResume() {
+    super.onResume()
+    if (!batteryReceiverRegistered) {
+        val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        context?.registerReceiver(batteryReceiver, filter)
+        batteryReceiverRegistered = true
+    }
     }
 
     private fun resetInputOverlay() {
@@ -513,37 +539,34 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
         }
     }
 
-    private fun updateThermalOverlay() {
-        val showOverlay = BooleanSetting.SHOW_THERMAL_OVERLAY.getBoolean()
-        binding.showThermalsText.setVisible(showOverlay)
-        if (showOverlay) {
-            thermalStatsUpdater = {
-                if (emulationViewModel.emulationStarted.value &&
-                    !emulationViewModel.isEmulationStopping.value
-                ) {
-                    val thermalStatus = when (powerManager.currentThermalStatus) {
-                        PowerManager.THERMAL_STATUS_LIGHT -> "😥"
-                        PowerManager.THERMAL_STATUS_MODERATE -> "🥵"
-                        PowerManager.THERMAL_STATUS_SEVERE -> "🔥"
-                        PowerManager.THERMAL_STATUS_CRITICAL,
-                        PowerManager.THERMAL_STATUS_EMERGENCY,
-                        PowerManager.THERMAL_STATUS_SHUTDOWN -> "☢️"
-
-                        else -> "🙂"
-                    }
-                    if (_binding != null) {
-                        binding.showThermalsText.text = thermalStatus
-                    }
-                    thermalStatsUpdateHandler.postDelayed(thermalStatsUpdater!!, 1000)
-                }
-            }
-            thermalStatsUpdateHandler.post(thermalStatsUpdater!!)
-        } else {
-            if (thermalStatsUpdater != null) {
-                thermalStatsUpdateHandler.removeCallbacks(thermalStatsUpdater!!)
+    private val batteryReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+        intent?.let {
+            if (it.action == Intent.ACTION_BATTERY_CHANGED) {
+                val temperature = getBatteryTemperature(context!!)
+                updateThermalOverlay(temperature)
             }
         }
     }
+}
+
+private fun updateThermalOverlay(temperature: Float) {
+    if (BooleanSetting.SHOW_THERMAL_OVERLAY.getBoolean() &&
+        emulationViewModel.emulationStarted.value &&
+        !emulationViewModel.isEmulationStopping.value
+    ) {
+        binding.showThermalsText.text = "$temperature°C"
+    }
+}
+
+private fun getBatteryTemperature(context: Context): Float {
+    val intent: Intent? = context.registerReceiver(
+        null,
+        IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+    )
+    val temperature = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
+    return temperature / 10.0f
+}
 
     @SuppressLint("SourceLockedOrientationActivity")
     private fun updateOrientation() {
