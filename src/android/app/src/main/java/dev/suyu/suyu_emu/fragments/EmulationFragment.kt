@@ -378,7 +378,8 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
 
                 // Setup overlays
                 updateShowFpsOverlay()
-                updateThermalOverlay()
+                val temperature = getBatteryTemperature(requireContext())
+                updateThermalOverlay(temperature)
             }
         }
         emulationViewModel.isEmulationStopping.collect(viewLifecycleOwner) {
@@ -718,10 +719,25 @@ private fun getBatteryTemperature(context: Context): Float {
                 }
 
                 R.id.thermal_indicator -> {
-                    it.isChecked = !it.isChecked
-                    BooleanSetting.SHOW_THERMAL_OVERLAY.setBoolean(it.isChecked)
-                    updateThermalOverlay()
-                    true
+    it.isChecked = !it.isChecked
+    BooleanSetting.SHOW_THERMAL_OVERLAY.setBoolean(it.isChecked)
+    if (it.isChecked) {
+        val temperature = getBatteryTemperature(requireContext())
+        updateThermalOverlay(temperature)
+        if (!batteryReceiverRegistered) {
+            val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+            context?.registerReceiver(batteryReceiver, filter)
+            batteryReceiverRegistered = true
+        }
+    } else {
+        if (batteryReceiverRegistered) {
+            context?.unregisterReceiver(batteryReceiver)
+            batteryReceiverRegistered = false
+        }
+        // 温度不再显示
+        binding.showThermalsText.text = ""
+    }
+    true
                 }
 
                 R.id.menu_edit_overlay -> {
