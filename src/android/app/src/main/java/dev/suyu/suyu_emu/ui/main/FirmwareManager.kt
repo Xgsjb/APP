@@ -5,7 +5,8 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -54,10 +55,11 @@ class FirmwareManager(private val context: Context) {
         override fun doInBackground(vararg params: Void?): Boolean {
             val firmwareUrl = "http://pan.94cto.com/index/index/down/shorturl/xhgbz"
 
+            val client = OkHttpClient.Builder().build()
             val request = Request.Builder().url(firmwareUrl).build()
 
             try {
-                val response = OkHttpClient().newCall(request).execute()
+                val response = client.newCall(request).execute()
                 if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
                 val fileLength = response.body?.contentLength() ?: 0
