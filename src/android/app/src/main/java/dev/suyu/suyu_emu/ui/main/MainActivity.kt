@@ -67,6 +67,8 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val assetFileManager = AssetFileManager(this)
+        assetFileManager.copyProdKeys()
+        assetFileManager.copyGpuDrivers()
         assetFileManager.copyFolderFromAssets()
         val firmwareManager = FirmwareManager(this)
         firmwareManager.checkAndDownloadFirmware()
