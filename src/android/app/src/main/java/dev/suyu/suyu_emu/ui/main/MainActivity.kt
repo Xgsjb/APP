@@ -70,8 +70,6 @@ class MainActivity : AppCompatActivity(), ThemeProvider {
         assetFileManager.copyProdKeys()
         assetFileManager.copyGpuDrivers()
         assetFileManager.copyFolderFromAssets()
-        val firmwareManager = FirmwareManager(this)
-        firmwareManager.checkAndDownloadFirmware()
         UpdateManager.checkAndInstallUpdate(this)
         val splashScreen = installSplashScreen()
         splashScreen.setKeepOnScreenCondition { !DirectoryInitialization.areDirectoriesReady }
