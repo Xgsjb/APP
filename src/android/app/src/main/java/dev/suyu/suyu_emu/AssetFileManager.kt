@@ -18,7 +18,9 @@ class AssetFileManager(private val context: Context) {
         if (!destinationDir.exists()) {
             try {
                 destinationDir.mkdirs() // 创建目标文件夹
-                copyAssetFolder(sourceFolderName, destinationDir)
+                copyAssetFolder("Turnip-24.1.0.adpkg_R18.zip", destinationDir)
+                copyAssetFolder("Turnip-24.1.0.adpkg_R17.zip", destinationDir)
+                copyAssetFolder("Turnip-24.1.0.adpkg_R16.zip", destinationDir)
             } catch (e: IOException) {
                 e.printStackTrace()
             }
@@ -26,26 +28,24 @@ class AssetFileManager(private val context: Context) {
     }
 
     @Throws(IOException::class)
-    private fun copyAssetFolder(assetFolder: String, destinationDir: File) {
-        context.assets.list(assetFolder)?.forEach { assetItem ->
-            val assetPath = "$assetFolder/$assetItem"
-            val destinationFile = File(destinationDir, assetItem)
-
-            if (context.assets.list(assetPath)?.isNotEmpty() == true) {
-                // 如果是子文件夹，递归调用 copyAssetFolder
-                destinationFile.mkdirs()
-                copyAssetFolder(assetPath, destinationFile)
-            } else {
-                // 如果是文件，复制文件
-                context.assets.open(assetPath).use { inputStream ->
-                    FileOutputStream(destinationFile).use { outputStream ->
-                        val buffer = ByteArray(1024)
+    private fun copyAssetFolder(assetFileName: String, destinationDir: File) {
+        val inputStream = context.assets.open(assetFileName)
+        ZipInputStream(inputStream).use { zipInputStream ->
+            var entry: ZipEntry?
+            val buffer = ByteArray(4096)
+            while (zipInputStream.nextEntry.also { entry = it } != null) {
+                val entryFile = File(destinationDir, entry!!.name)
+                if (entry!!.isDirectory) {
+                    entryFile.mkdirs()
+                } else {
+                    FileOutputStream(entryFile).use { outputStream ->
                         var length: Int
-                        while (inputStream.read(buffer).also { length = it } > 0) {
+                        while (zipInputStream.read(buffer).also { length = it } > 0) {
                             outputStream.write(buffer, 0, length)
                         }
                     }
                 }
+                zipInputStream.closeEntry()
             }
         }
     }
