@@ -64,6 +64,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.TypedValue
+import com.bosphere.trebuchet.Trebuchet
 
 class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var emulationState: EmulationState
@@ -512,33 +513,40 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     }
 
     private fun updateShowFpsOverlay() {
-        val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
-        binding.showFpsText.setVisible(showOverlay)
-        if (showOverlay) {
-            val SYSTEM_FPS = 0
-            val FPS = 1
-            val FRAMETIME = 2
-            val SPEED = 3
-            perfStatsUpdater = {
-                if (emulationViewModel.emulationStarted.value &&
-                    !emulationViewModel.isEmulationStopping.value
-                ) {
-                    val perfStats = NativeLibrary.getPerfStats()
-                    val cpuBackend = NativeLibrary.getCpuBackend()
-                    val gpuDriver = NativeLibrary.getGpuDriver()
-                    if (_binding != null) {
-                        binding.showFpsText.text =
-                            String.format("FPS: %.1f\n%s/%s", perfStats[FPS], cpuBackend, gpuDriver)
-                    }
-                    perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
+    // Initialize Trebuchet if it's not already initialized (typically in onCreate of your activity or fragment)
+    Trebuchet.getInstance().init(context)
+
+    val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
+    binding.showFpsText.setVisible(showOverlay)
+    if (showOverlay) {
+        val FPS = 1
+        val FRAMETIME = 2
+        val SPEED = 3
+        var perfStatsUpdater: Runnable? = null // Declare perfStatsUpdater as nullable Runnable
+        val perfStatsUpdateHandler = Handler(Looper.getMainLooper()) // Create Handler for main thread
+
+        perfStatsUpdater = Runnable {
+            if (emulationViewModel.emulationStarted.value &&
+                !emulationViewModel.isEmulationStopping.value
+            ) {
+                val perfStats = NativeLibrary.getPerfStats()
+                val cpuBackend = NativeLibrary.getCpuBackend()
+                val gpuDriver = NativeLibrary.getGpuDriver()
+                val gpuUsage = Trebuchet.getInstance().gpuUsagePercentage
+                if (binding != null) {
+                    binding.showFpsText.text =
+                        String.format("FPS: %.1f\nGPU Usage: %.1f%%\n%s/%s", perfStats[FPS], gpuUsage, cpuBackend, gpuDriver)
                 }
-            }
-            perfStatsUpdateHandler.post(perfStatsUpdater!!)
-        } else {
-            if (perfStatsUpdater != null) {
-                perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
+                perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
         }
+
+        perfStatsUpdateHandler.post(perfStatsUpdater)
+    } else {
+        if (perfStatsUpdater != null) {
+            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater)
+        }
+    }
     }
 
     private val batteryReceiver = object : BroadcastReceiver() {
