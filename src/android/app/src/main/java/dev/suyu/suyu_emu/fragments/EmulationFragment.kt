@@ -64,7 +64,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.TypedValue
-import com.bosphere.trebuchet.Trebuchet
+import android.app.ActivityManager
 
 class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var emulationState: EmulationState
@@ -513,41 +513,50 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     }
 
     private fun updateShowFpsOverlay() {
-    // Initialize Trebuchet if it's not already initialized (typically in onCreate of your activity or fragment)
-    Trebuchet.getInstance().init(context)
-
     val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
     binding.showFpsText.setVisible(showOverlay)
     if (showOverlay) {
         val FPS = 1
-        val FRAMETIME = 2
-        val SPEED = 3
-        var perfStatsUpdater: Runnable? = null // Declare perfStatsUpdater as nullable Runnable
-        val perfStatsUpdateHandler = Handler(Looper.getMainLooper()) // Create Handler for main thread
-
-        perfStatsUpdater = Runnable {
+        val cpuBackend = NativeLibrary.getCpuBackend()
+        val gpuDriver = NativeLibrary.getGpuDriver()
+        
+        perfStatsUpdater = {
             if (emulationViewModel.emulationStarted.value &&
                 !emulationViewModel.isEmulationStopping.value
             ) {
                 val perfStats = NativeLibrary.getPerfStats()
-                val cpuBackend = NativeLibrary.getCpuBackend()
-                val gpuDriver = NativeLibrary.getGpuDriver()
-                val gpuUsage = Trebuchet.getInstance().gpuUsagePercentage
-                if (binding != null) {
+                val gpuUsage = getGpuUsagePercentage()
+                if (_binding != null) {
                     binding.showFpsText.text =
                         String.format("FPS: %.1f\nGPU Usage: %.1f%%\n%s/%s", perfStats[FPS], gpuUsage, cpuBackend, gpuDriver)
                 }
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
         }
-
-        perfStatsUpdateHandler.post(perfStatsUpdater)
+        perfStatsUpdateHandler.post(perfStatsUpdater!!)
     } else {
         if (perfStatsUpdater != null) {
-            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater)
+            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
         }
     }
+}
+
+private fun getGpuUsagePercentage(): Float {
+    val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    val memoryInfo = ActivityManager.MemoryInfo()
+    activityManager.getMemoryInfo(memoryInfo)
+
+    // GPU memory usage (in KB)
+    val totalGpuMemory = memoryInfo.totalGpu
+    val usedGpuMemory = memoryInfo.totalGpu - memoryInfo.freeGpu
+
+    // Calculate GPU usage percentage
+    return if (totalGpuMemory > 0) {
+        (usedGpuMemory.toFloat() / totalGpuMemory.toFloat()) * 100f
+    } else {
+        0f
     }
+}
 
     private val batteryReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
