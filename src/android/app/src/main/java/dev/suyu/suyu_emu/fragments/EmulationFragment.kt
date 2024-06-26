@@ -515,34 +515,33 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private fun updateShowFpsOverlay() {
     val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
     binding.showFpsText.setVisible(showOverlay)
+    
     if (showOverlay) {
         val FPS = 1
         val cpuBackend = NativeLibrary.getCpuBackend()
         val gpuDriver = NativeLibrary.getGpuDriver()
         
         perfStatsUpdater = {
-            if (emulationViewModel.emulationStarted.value &&
-                !emulationViewModel.isEmulationStopping.value
+            if (emulationViewModel.emulationStarted.value == true &&
+                emulationViewModel.isEmulationStopping.value == false
             ) {
                 val perfStats = NativeLibrary.getPerfStats()
                 val gpuUsage = getGpuUsagePercentage()
-                if (_binding != null) {
-                    binding.showFpsText.text =
-                        String.format("FPS: %.1f\nGPU Usage: %.1f%%\n%s/%s", perfStats[FPS], gpuUsage, cpuBackend, gpuDriver)
-                }
+                binding.showFpsText.text =
+                    String.format("FPS: %.1f\nGPU Usage: %.1f%%\n%s/%s", perfStats[FPS], gpuUsage, cpuBackend, gpuDriver)
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
         }
         perfStatsUpdateHandler.post(perfStatsUpdater!!)
     } else {
-        if (perfStatsUpdater != null) {
-            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
+        perfStatsUpdater?.let {
+            perfStatsUpdateHandler.removeCallbacks(it)
         }
     }
 }
 
 private fun getGpuUsagePercentage(): Float {
-    val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    val activityManager = requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
     val memoryInfo = ActivityManager.MemoryInfo()
     activityManager.getMemoryInfo(memoryInfo)
 
