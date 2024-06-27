@@ -536,7 +536,8 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                         String.format("FPS: %.1f\nMEM: %d MB", perfStats[FPS], availableMegs)
                     binding.showFpsText.setTextColor(Color.GREEN) // 设置文本颜色为绿色
                 }
-                perfStatsUpdateHandler.postDelayed(perfStatsUpdater, 800)
+                perfStatsUpdater?.let {
+                   perfStatsUpdateHandler.postDelayed(it, 800)
             }
         }
         perfStatsUpdateHandler?.post(perfStatsUpdater)
