@@ -64,6 +64,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.TypedValue
+import android.app.ActivityManager
 
 class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var emulationState: EmulationState
@@ -515,10 +516,7 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
     binding.showFpsText.setVisible(showOverlay)
     if (showOverlay) {
-        val SYSTEM_FPS = 0
         val FPS = 1
-        val FRAMETIME = 2
-        val SPEED = 3
         perfStatsUpdater = {
             if (emulationViewModel.emulationStarted.value &&
                 !emulationViewModel.isEmulationStopping.value
@@ -528,11 +526,11 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                 val gpuDriver = NativeLibrary.getGpuDriver()
                 
                 // 获取内存占用率百分比
-                val memoryUsage = getMemoryUsagePercentage()
+                val memoryUsage = getMemoryUsagePercentage(binding.root.context)
                 
                 if (_binding != null) {
                     binding.showFpsText.text = String.format(
-                        "FPS: %.1f\n内存: %.1f%%\n%s/%s",
+                        "FPS: %.1f\n内存占用: %.1f%%\n%s/%s",
                         perfStats[FPS], memoryUsage, cpuBackend, gpuDriver
                     )
                 }
@@ -548,13 +546,16 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
 }
 
 // 获取内存占用率的方法
-private fun getMemoryUsagePercentage(): Float {
-    val runtime = Runtime.getRuntime()
-    val totalMemory = runtime.totalMemory()
-    val freeMemory = runtime.freeMemory()
-    val usedMemory = totalMemory - freeMemory
-    val maxMemory = runtime.maxMemory()
-    val memoryUsage = usedMemory.toFloat() / maxMemory.toFloat() * 100.0f
+private fun getMemoryUsagePercentage(context: Context): Float {
+    val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    val memoryInfo = ActivityManager.MemoryInfo()
+    activityManager.getMemoryInfo(memoryInfo)
+
+    val totalMemory = memoryInfo.totalMem
+    val availMemory = memoryInfo.availMem
+    val usedMemory = totalMemory - availMemory
+    val memoryUsage = usedMemory.toFloat() / totalMemory.toFloat() * 100.0f
+
     return memoryUsage
 }
 
