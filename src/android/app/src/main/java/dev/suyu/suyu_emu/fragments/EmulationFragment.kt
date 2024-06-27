@@ -64,7 +64,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.TypedValue
-import android.app.ActivityManager
 
 class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var emulationState: EmulationState
@@ -515,46 +514,48 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private fun updateShowFpsOverlay() {
     val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
     binding.showFpsText.setVisible(showOverlay)
-    
     if (showOverlay) {
+        val SYSTEM_FPS = 0
         val FPS = 1
-        val cpuBackend = NativeLibrary.getCpuBackend()
-        val gpuDriver = NativeLibrary.getGpuDriver()
-        
+        val FRAMETIME = 2
+        val SPEED = 3
         perfStatsUpdater = {
-            if (emulationViewModel.emulationStarted.value == true &&
-                emulationViewModel.isEmulationStopping.value == false
+            if (emulationViewModel.emulationStarted.value &&
+                !emulationViewModel.isEmulationStopping.value
             ) {
                 val perfStats = NativeLibrary.getPerfStats()
-                val gpuUsage = getGpuUsagePercentage()
-                binding.showFpsText.text =
-                    String.format("FPS: %.1f\nGPU Usage: %.1f%%\n%s/%s", perfStats[FPS], gpuUsage, cpuBackend, gpuDriver)
+                val cpuBackend = NativeLibrary.getCpuBackend()
+                val gpuDriver = NativeLibrary.getGpuDriver()
+                
+                // 获取内存占用率百分比
+                val memoryUsage = getMemoryUsagePercentage()
+                
+                if (_binding != null) {
+                    binding.showFpsText.text = String.format(
+                        "FPS: %.1f\n内存: %.1f%%\n%s/%s",
+                        perfStats[FPS], memoryUsage, cpuBackend, gpuDriver
+                    )
+                }
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
         }
         perfStatsUpdateHandler.post(perfStatsUpdater!!)
     } else {
-        perfStatsUpdater?.let {
-            perfStatsUpdateHandler.removeCallbacks(it)
+        if (perfStatsUpdater != null) {
+            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
         }
     }
 }
 
-private fun getGpuUsagePercentage(): Float {
-    val activityManager = requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-    val memoryInfo = ActivityManager.MemoryInfo()
-    activityManager.getMemoryInfo(memoryInfo)
-
-    // GPU memory usage (in KB)
-    val totalGpuMemory = memoryInfo.totalGpu
-    val usedGpuMemory = memoryInfo.totalGpu - memoryInfo.freeGpu
-
-    // Calculate GPU usage percentage
-    return if (totalGpuMemory > 0) {
-        (usedGpuMemory.toFloat() / totalGpuMemory.toFloat()) * 100f
-    } else {
-        0f
-    }
+// 获取内存占用率的方法
+private fun getMemoryUsagePercentage(): Float {
+    val runtime = Runtime.getRuntime()
+    val totalMemory = runtime.totalMemory()
+    val freeMemory = runtime.freeMemory()
+    val usedMemory = totalMemory - freeMemory
+    val maxMemory = runtime.maxMemory()
+    val memoryUsage = usedMemory.toFloat() / maxMemory.toFloat() * 100.0f
+    return memoryUsage
 }
 
     private val batteryReceiver = object : BroadcastReceiver() {
