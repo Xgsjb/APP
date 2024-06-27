@@ -524,15 +524,13 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                 val perfStats = NativeLibrary.getPerfStats()
                 val cpuBackend = NativeLibrary.getCpuBackend()
                 val gpuDriver = NativeLibrary.getGpuDriver()
-                
-                // 获取内存占用率百分比
-                val memoryUsage = getMemoryUsagePercentage(binding.root.context)
-                
-                if (_binding != null) {
-                    binding.showFpsText.text = String.format(
-                        "FPS: %.1f\n内存占用: %.1f%%\n%s/%s",
-                        perfStats[FPS], memoryUsage, cpuBackend, gpuDriver
-                    )
+                val memInfo = ActivityManager.MemoryInfo()
+                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                activityManager.getMemoryInfo(memInfo)
+                val availableMegs = memInfo.availMem / 0x100000L  // 获取可用内存大小
+                runOnUiThread {
+                    binding.showFpsText.text =
+                        String.format("FPS: %.1f\n%s/%s\nMEM: %d MB", perfStats[FPS], cpuBackend, gpuDriver, availableMegs)
                 }
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
@@ -543,21 +541,7 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
             perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
         }
     }
-}
-
-// 获取内存占用率的方法
-private fun getMemoryUsagePercentage(context: Context): Float {
-    val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-    val memoryInfo = ActivityManager.MemoryInfo()
-    activityManager.getMemoryInfo(memoryInfo)
-
-    val totalMemory = memoryInfo.totalMem
-    val availMemory = memoryInfo.availMem
-    val usedMemory = totalMemory - availMemory
-    val memoryUsage = usedMemory.toFloat() / totalMemory.toFloat() * 100.0f
-
-    return memoryUsage
-}
+    }
 
     private val batteryReceiver = object : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
