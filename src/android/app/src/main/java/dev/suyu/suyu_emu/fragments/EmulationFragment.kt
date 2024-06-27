@@ -517,6 +517,8 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     binding.showFpsText.setVisible(showOverlay)
     if (showOverlay) {
         val FPS = 1
+        val FRAMETIME = 2
+        val SPEED = 3
         perfStatsUpdater = {
             if (emulationViewModel.emulationStarted.value &&
                 !emulationViewModel.isEmulationStopping.value
@@ -524,13 +526,17 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                 val perfStats = NativeLibrary.getPerfStats()
                 val cpuBackend = NativeLibrary.getCpuBackend()
                 val gpuDriver = NativeLibrary.getGpuDriver()
-                val memInfo = ActivityManager.MemoryInfo()
-                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                activityManager.getMemoryInfo(memInfo)
-                val availableMegs = memInfo.availMem / 0x100000L  // 获取可用内存大小
-                runOnUiThread {
+                
+                // Get memory info
+                val mi = ActivityManager.MemoryInfo()
+                val activityManager =
+                    requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                activityManager.getMemoryInfo(mi)
+                val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
+
+                if (_binding != null) {
                     binding.showFpsText.text =
-                        String.format("FPS: %.1f\n%s/%s\nMEM: %d MB", perfStats[FPS], cpuBackend, gpuDriver, availableMegs)
+                        String.format("FPS: %.1f\nMEM: %d MB\n%s/%s", perfStats[FPS], availableMegs, cpuBackend, gpuDriver)
                 }
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
