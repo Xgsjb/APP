@@ -515,38 +515,31 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private fun updateShowFpsOverlay() {
     val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
     binding.showFpsText.setVisible(showOverlay)
-    
     if (showOverlay) {
-        val perfStatsUpdater = object : Runnable {
-            override fun run() {
-                if (emulationViewModel.emulationStarted.value &&
-                    !emulationViewModel.isEmulationStopping.value
-                ) {
-                    // 获取帧数
-                    val fps = NativeLibrary.getFps()
+        val FPS = 1
+        val perfStatsUpdater = {
+            if (emulationViewModel.emulationStarted.value &&
+                !emulationViewModel.isEmulationStopping.value
+            ) {
+                val perfStats = NativeLibrary.getPerfStats()
+                
+                // Get memory info
+                val mi = ActivityManager.MemoryInfo()
+                val activityManager =
+                    requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                activityManager.getMemoryInfo(mi)
+                val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
 
-                    // 获取内存信息
-                    val mi = ActivityManager.MemoryInfo()
-                    val activityManager =
-                        requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                    activityManager.getMemoryInfo(mi)
-                    val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
-
-                    // 更新UI
+                if (_binding != null) {
                     binding.showFpsText.text =
-                        String.format("FPS: %.1f\nMEM: %d MB", fps, availableMegs)
-                    binding.showFpsText.setTextColor(Color.GREEN)
-
-                    // 继续更新
-                    perfStatsUpdateHandler.post(this)
+                        String.format("FPS: %.1f\nMEM: %d MB", perfStats[FPS], availableMegs)
+                    binding.showFpsText.setTextColor(Color.GREEN) // 设置文本颜色为绿色
                 }
+                perfStatsUpdateHandler.postDelayed(perfStatsUpdater, 800)
             }
         }
-
-        // 开始更新
         perfStatsUpdateHandler.post(perfStatsUpdater)
     } else {
-        // 如果不需要显示Overlay，则移除所有更新回调
         perfStatsUpdateHandler.removeCallbacksAndMessages(null)
     }
     }
