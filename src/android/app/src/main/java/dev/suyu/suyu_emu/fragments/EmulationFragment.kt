@@ -65,6 +65,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.util.TypedValue
 import android.app.ActivityManager
+import android.graphics.Color
 
 class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private lateinit var emulationState: EmulationState
@@ -530,7 +531,7 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                 activityManager.getMemoryInfo(mi)
                 val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
 
-                if (_binding != null) {
+                if (binding != null) {
                     binding.showFpsText.text =
                         String.format("FPS: %.1f\nMEM: %d MB", perfStats[FPS], availableMegs)
                     binding.showFpsText.setTextColor(Color.GREEN) // 设置文本颜色为绿色
@@ -538,9 +539,9 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater, 800)
             }
         }
-        perfStatsUpdateHandler.post(perfStatsUpdater)
+        perfStatsUpdateHandler?.post(perfStatsUpdater)
     } else {
-        perfStatsUpdateHandler.removeCallbacksAndMessages(null)
+        perfStatsUpdateHandler?.removeCallbacksAndMessages(null)
     }
     }
 
