@@ -515,37 +515,39 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     private fun updateShowFpsOverlay() {
     val showOverlay = BooleanSetting.SHOW_PERFORMANCE_OVERLAY.getBoolean()
     binding.showFpsText.setVisible(showOverlay)
+    
     if (showOverlay) {
-        val FPS = 1
-        val FRAMETIME = 2
-        val SPEED = 3
-        perfStatsUpdater = {
-            if (emulationViewModel.emulationStarted.value &&
-                !emulationViewModel.isEmulationStopping.value
-            ) {
-                val perfStats = NativeLibrary.getPerfStats()
-                val cpuBackend = NativeLibrary.getCpuBackend()
-                val gpuDriver = NativeLibrary.getGpuDriver()
-                
-                // Get memory info
-                val mi = ActivityManager.MemoryInfo()
-                val activityManager =
-                    requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                activityManager.getMemoryInfo(mi)
-                val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
+        val perfStatsUpdater = object : Runnable {
+            override fun run() {
+                if (emulationViewModel.emulationStarted.value &&
+                    !emulationViewModel.isEmulationStopping.value
+                ) {
+                    // 获取帧数
+                    val fps = NativeLibrary.getFps()
 
-                if (_binding != null) {
+                    // 获取内存信息
+                    val mi = ActivityManager.MemoryInfo()
+                    val activityManager =
+                        requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                    activityManager.getMemoryInfo(mi)
+                    val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
+
+                    // 更新UI
                     binding.showFpsText.text =
-                        String.format("FPS: %.1f\nMEM: %d MB\n%s/%s", perfStats[FPS], availableMegs, cpuBackend, gpuDriver)
+                        String.format("FPS: %.1f\nMEM: %d MB", fps, availableMegs)
+                    binding.showFpsText.setTextColor(Color.GREEN)
+
+                    // 继续更新
+                    perfStatsUpdateHandler.post(this)
                 }
-                perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
         }
-        perfStatsUpdateHandler.post(perfStatsUpdater!!)
+
+        // 开始更新
+        perfStatsUpdateHandler.post(perfStatsUpdater)
     } else {
-        if (perfStatsUpdater != null) {
-            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
-        }
+        // 如果不需要显示Overlay，则移除所有更新回调
+        perfStatsUpdateHandler.removeCallbacksAndMessages(null)
     }
     }
 
