@@ -518,11 +518,15 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
     binding.showFpsText.setVisible(showOverlay)
     if (showOverlay) {
         val FPS = 1
-        val perfStatsUpdater = {
+        val FRAMETIME = 2
+        val SPEED = 3
+        perfStatsUpdater = {
             if (emulationViewModel.emulationStarted.value &&
                 !emulationViewModel.isEmulationStopping.value
             ) {
                 val perfStats = NativeLibrary.getPerfStats()
+                val cpuBackend = NativeLibrary.getCpuBackend()
+                val gpuDriver = NativeLibrary.getGpuDriver()
                 
                 // Get memory info
                 val mi = ActivityManager.MemoryInfo()
@@ -531,18 +535,19 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                 activityManager.getMemoryInfo(mi)
                 val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
 
-                if (binding != null) {
+                if (_binding != null) {
                     binding.showFpsText.text =
-                        String.format("FPS: %.1f\nMEM: %d MB", perfStats[FPS], availableMegs)
+                        String.format("FPS: %.1f\nMEM: %d MB\n%s/%s", perfStats[FPS], availableMegs, cpuBackend, gpuDriver)
                     binding.showFpsText.setTextColor(Color.GREEN) // 设置文本颜色为绿色
                 }
-                perfStatsUpdater?.let {
-                   perfStatsUpdateHandler.postDelayed(it, 800)
+                perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
         }
-        perfStatsUpdateHandler?.post(perfStatsUpdater)
+        perfStatsUpdateHandler.post(perfStatsUpdater!!)
     } else {
-        perfStatsUpdateHandler?.removeCallbacksAndMessages(null)
+        if (perfStatsUpdater != null) {
+            perfStatsUpdateHandler.removeCallbacks(perfStatsUpdater!!)
+        }
     }
     }
 
