@@ -534,11 +534,16 @@ class EmulationFragment : Fragment(), SurfaceHolder.Callback {
                     requireContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
                 activityManager.getMemoryInfo(mi)
                 val availableMegs = mi.availMem / 1048576L // Convert bytes to megabytes
-
+                
                 if (_binding != null) {
-                    binding.showFpsText.text =
-                        String.format("FPS: %.1f\nMEM: %d MB\n%s/%s", perfStats[FPS], availableMegs, cpuBackend, gpuDriver)
-                    binding.showFpsText.setTextColor(Color.GREEN) // 设置文本颜色为绿色
+                    // 设置文本内容，但隐藏cpuBackend和gpuDriver
+                    binding.showFpsText.text = String.format(
+                        "FPS: %.1f\nMEM: %d MB\n%s/%s",
+                        perfStats[FPS], availableMegs, cpuBackend, gpuDriver
+                    )
+                    // 隐藏cpuBackend和gpuDriver的文本内容
+                    binding.showFpsText.text = binding.showFpsText.text.toString().replace("/${cpuBackend}", "")
+                    binding.showFpsText.text = binding.showFpsText.text.toString().replace("/${gpuDriver}", "")
                 }
                 perfStatsUpdateHandler.postDelayed(perfStatsUpdater!!, 800)
             }
