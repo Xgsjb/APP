@@ -1,10 +1,11 @@
+# SPDX-FileCopyrightText: 2022 yuzu Emulator Project
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 name: 'yuzu verify'
 
 on:
   pull_request:
     branches: [ master ]
-  workflow_dispatch:
-
 env:
   PR_NUMBER: pr${{ github.event.number }}
 
@@ -38,25 +39,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ccache apksigner glslang-dev glslang-tools
-      - name: Grant execute permissions for build script
-        run: chmod +x ./.ci/scripts/android/build.sh
       - name: Build
         run: ./.ci/scripts/android/build.sh
-      - name: Grant execute permissions for upload script
-        run: chmod +x ./.ci/scripts/android/upload.sh
       - name: Copy and sign artifacts
         env:
           ANDROID_KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
         run: ./.ci/scripts/android/upload.sh
-      - name: Print APK path
-        run: |
-          APK_PATH=$(find artifacts -name "*.apk" -print -quit)
-          echo "APK file path: $APK_PATH"
-          echo "::set-output name=apk_path::$APK_PATH"
-      - name: Upload APK
+      - name: Upload
         uses: actions/upload-artifact@v3
         with:
           name: android
-          path: ${{ env.apk_path }}
+          path: artifacts/
