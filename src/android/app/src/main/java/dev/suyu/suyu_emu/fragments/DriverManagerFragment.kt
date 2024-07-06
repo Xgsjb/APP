@@ -236,7 +236,7 @@ class DriverManagerFragment : Fragment() {
     textDownload1.setOnClickListener {
         // 创建ProgressDialog
         val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("下载中...")
+        progressDialog.setMessage("Download...")
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
         progressDialog.isIndeterminate = false
         progressDialog.setCancelable(false)
@@ -255,7 +255,7 @@ class DriverManagerFragment : Fragment() {
     textDownload2.setOnClickListener {
         // 创建ProgressDialog
         val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("下载中...")
+        progressDialog.setMessage("Download...")
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
         progressDialog.isIndeterminate = false
         progressDialog.setCancelable(false)
@@ -274,7 +274,7 @@ class DriverManagerFragment : Fragment() {
     textDownload3.setOnClickListener {
         // 创建ProgressDialog
         val progressDialog = ProgressDialog(requireContext())
-        progressDialog.setMessage("下载中...")
+        progressDialog.setMessage("Download...")
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
         progressDialog.isIndeterminate = false
         progressDialog.setCancelable(false)
